@@ -27,6 +27,11 @@ export const metadata: Metadata = {
     template: "%s | Quantipixor",
   },
   description: "Fast, private batch image compression in your browser.",
+  icons: {
+    icon: "/favicon.ico", // simple default favicon
+    shortcut: "/favicon-32x32.png", // optional shortcut icon
+    apple: "/apple-touch-icon.png", // apple icon
+  },
 };
 
 export default function RootLayout({

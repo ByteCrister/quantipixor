@@ -1,20 +1,12 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import QuantipixorIcon from "@/components/global/QuantipixorIcon";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
 const Header: React.FC = () => {
-  const [aboutModalOpen, setAboutModalOpen] = useState(false);
-  const [helpModalOpen, setHelpModalOpen] = useState(false);
+  const router = useRouter();                          
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -25,11 +17,11 @@ const Header: React.FC = () => {
   }, []);
 
   const handleLogoClick = () => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    router.push("/")
   };
 
   const handleBatchCompressorClick = () => {
-    alert("Batch Compressor page would open here – separate page.");
+    router.push("/image/batch-compressor");
   };
 
   const navPillBtn =
@@ -91,7 +83,7 @@ const Header: React.FC = () => {
               >
                 <button
                   type="button"
-                  onClick={() => setAboutModalOpen(true)}
+                  onClick={() => router.push("/about")}
                   className={navPillBtn}
                   aria-label="About Quantipixor"
                 >
@@ -99,7 +91,7 @@ const Header: React.FC = () => {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setHelpModalOpen(true)}
+                  onClick={() => router.push("/help")}
                   className={navPillBtn}
                   aria-label="Help and FAQ"
                 >
@@ -119,61 +111,6 @@ const Header: React.FC = () => {
           </div>
         </div>
       </header>
-
-      <Dialog open={aboutModalOpen} onOpenChange={setAboutModalOpen}>
-        <DialogContent className="max-w-md border-white/40 dark:border-white/10 dark:bg-[color-mix(in_srgb,var(--surface)_92%,transparent)]">
-          <DialogHeader>
-            <DialogTitle>About Quantipixor</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3 text-[#141414]/80 dark:text-white/75">
-            <p className="leading-relaxed">
-              Quantipixor is a next-gen batch image compressor that preserves quality while reducing file size up to 80%. No server uploads – all processing happens locally in your browser.
-            </p>
-          </div>
-          <DialogFooter>
-            <DialogClose asChild>
-              <button
-                type="button"
-                className="rounded-full bg-[#1856FF] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#0E4ADB] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1856FF] focus-visible:ring-offset-2"
-              >
-                Close
-              </button>
-            </DialogClose>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={helpModalOpen} onOpenChange={setHelpModalOpen}>
-        <DialogContent className="max-w-md border-white/40 dark:border-white/10 dark:bg-[color-mix(in_srgb,var(--surface)_92%,transparent)]">
-          <DialogHeader>
-            <DialogTitle>Help &amp; FAQ</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 text-[#141414]/80 dark:text-white/75">
-            <div className="rounded-xl border border-black/[0.06] bg-black/[0.02] p-3 dark:border-white/10 dark:bg-white/[0.03]">
-              <h3 className="font-semibold text-[#141414] dark:text-white">How to use?</h3>
-              <p className="mt-1 text-sm">Drag &amp; drop images, adjust compression level, download ZIP.</p>
-            </div>
-            <div className="rounded-xl border border-black/[0.06] bg-black/[0.02] p-3 dark:border-white/10 dark:bg-white/[0.03]">
-              <h3 className="font-semibold text-[#141414] dark:text-white">Supported formats</h3>
-              <p className="mt-1 text-sm">JPEG, PNG, WebP</p>
-            </div>
-            <div className="rounded-xl border border-black/[0.06] bg-black/[0.02] p-3 dark:border-white/10 dark:bg-white/[0.03]">
-              <h3 className="font-semibold text-[#141414] dark:text-white">Is my data safe?</h3>
-              <p className="mt-1 text-sm">Yes, all processing happens locally in your browser — no server uploads.</p>
-            </div>
-          </div>
-          <DialogFooter>
-            <DialogClose asChild>
-              <button
-                type="button"
-                className="rounded-full bg-[#1856FF] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#0E4ADB] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1856FF] focus-visible:ring-offset-2"
-              >
-                Close
-              </button>
-            </DialogClose>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </>
   );
 };

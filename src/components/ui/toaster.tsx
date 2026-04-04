@@ -59,7 +59,7 @@ function ToastItem({ record, onDismiss }: { record: ToastRecord; onDismiss: () =
       transition={{ type: "spring", stiffness: 420, damping: 32 }}
       role="status"
       className={cn(
-        "pointer-events-auto flex w-full max-w-full gap-3 rounded-2xl border px-3 py-3 shadow-[0_16px_48px_-12px_rgba(24,86,255,0.2)] backdrop-blur-xl sm:max-w-sm sm:px-4 dark:shadow-[0_16px_48px_-12px_rgba(0,0,0,0.45)]",
+        "pointer-events-auto flex w-full gap-3 rounded-2xl border px-3 py-3 shadow-[0_16px_48px_-12px_rgba(24,86,255,0.2)] backdrop-blur-xl sm:px-4 dark:shadow-[0_16px_48px_-12px_rgba(0,0,0,0.45)]",
         styles.border,
         styles.bg,
       )}
@@ -71,7 +71,7 @@ function ToastItem({ record, onDismiss }: { record: ToastRecord; onDismiss: () =
         )}
         <p
           className={cn(
-            "break-words text-sm leading-snug text-[#141414]/75 dark:text-white/75",
+            "wrap-break-word text-sm leading-snug text-[#141414]/75 dark:text-white/75",
             record.title && "mt-0.5",
           )}
         >
@@ -95,7 +95,7 @@ function ToastItem({ record, onDismiss }: { record: ToastRecord; onDismiss: () =
       <button
         type="button"
         onClick={onDismiss}
-        className="shrink-0 self-start rounded-lg p-1 text-[#141414]/45 transition-colors hover:bg-black/[0.05] hover:text-[#141414] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1856FF]/40 dark:text-white/45 dark:hover:bg-white/10 dark:hover:text-white"
+        className="shrink-0 self-start rounded-lg p-1 text-[#141414]/45 transition-colors hover:bg-black/5 hover:text-[#141414] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1856FF]/40 dark:text-white/45 dark:hover:bg-white/10 dark:hover:text-white"
         aria-label="Dismiss notification"
       >
         <X className="size-4" />
@@ -110,10 +110,10 @@ export function Toaster() {
 
   return (
     <div
-      className="pointer-events-none fixed inset-x-0 bottom-4 z-[200] flex justify-center px-3 sm:inset-x-auto sm:bottom-6 sm:right-6 sm:justify-end sm:px-0"
+      className="pointer-events-none fixed bottom-4 left-4 right-4 z-200 flex justify-center sm:bottom-6 sm:left-auto sm:right-6 sm:justify-end"
       aria-live="polite"
     >
-      <div className="flex w-full max-w-[min(24rem,calc(100vw-1.5rem))] flex-col gap-2 sm:max-w-sm">
+      <div className="flex w-full max-w-sm flex-col gap-2">
         <AnimatePresence mode="popLayout">
           {toasts.map((t) => (
             <ToastItem key={t.id} record={t} onDismiss={() => dismiss(t.id)} />

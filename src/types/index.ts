@@ -48,6 +48,8 @@ export interface ImageCompressorState {
 export interface ImageCompressorActions {
     addFiles: (files: File[]) => Promise<UploadStats>;
     removeImage: (id: string) => void;
+    /** Re-insert a removed image (new object URL). Clamps index to current list length. */
+    restoreImageAt: (item: ImageItem, index: number) => void;
     clearAll: () => void;
     /** Same files stay in the queue; clears compression results so you can compress/download again. */
     resetForRecompress: () => void;

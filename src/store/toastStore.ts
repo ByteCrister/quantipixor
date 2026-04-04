@@ -8,6 +8,8 @@ export interface ToastRecord {
   title?: string;
   message: string;
   variant: ToastVariant;
+  /** Optional primary action (e.g. Undo); dismisses toast after the handler runs. */
+  action?: { label: string; onClick: () => void };
 }
 
 interface ToastState {

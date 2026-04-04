@@ -13,6 +13,7 @@ import {
   Loader2,
   RotateCcw,
   Sparkles,
+  Trash2,
 } from "lucide-react";
 
 import {
@@ -46,6 +47,7 @@ import {
   type BatchConfirmAction,
 } from "./BatchActionConfirmDialog";
 import { cn } from "@/lib/utils";
+import type { ImageItem } from "@/types";
 
 export default function BatchCompressor() {
   const images = useImages();
@@ -71,6 +73,8 @@ export default function BatchCompressor() {
     setQuality,
     clearAll,
     resetForRecompress,
+    removeImage,
+    restoreImageAt,
   } = useImageCompressorStore();
 
   const queueIsFull = images.length >= MAX_TOTAL_IMAGES;
@@ -153,6 +157,26 @@ export default function BatchCompressor() {
     if (files?.length) void ingestFiles(files);
     e.target.value = "";
   };
+
+  const handleRemoveImage = useCallback(
+    (image: ImageItem, index: number) => {
+      if (isCompressing || isDownloading) return;
+      const snapshot: ImageItem = { ...image };
+      removeImage(image.id);
+      toast({
+        variant: "info",
+        title: "Removed",
+        message: `"${image.originalName}" removed from the queue.`,
+        action: {
+          label: "Undo",
+          onClick: () => {
+            restoreImageAt(snapshot, index);
+          },
+        },
+      });
+    },
+    [isCompressing, isDownloading, removeImage, restoreImageAt],
+  );
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -560,7 +584,7 @@ export default function BatchCompressor() {
 
         {/* Image grid */}
         <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-          {images.map((image) => (
+          {images.map((image, index) => (
             <Card
               key={image.id}
               className="overflow-hidden border-black/6 transition-shadow hover:shadow-[0_12px_40px_-16px_rgba(24,86,255,0.2)] dark:border-white/10"
@@ -581,6 +605,20 @@ export default function BatchCompressor() {
                         <Loader2 className="size-8 animate-spin text-white" aria-hidden />
                       </div>
                     )}
+                    <button
+                      type="button"
+                      disabled={isCompressing || isDownloading}
+                      onClick={() => handleRemoveImage(image, index)}
+                      className={cn(
+                        "absolute right-2 top-2 flex size-9 items-center justify-center rounded-full border border-white/25 bg-[#141414]/55 text-white shadow-md backdrop-blur-sm transition",
+                        "hover:bg-[#EA2143]/90 hover:border-white/40",
+                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80",
+                        (isCompressing || isDownloading) && "cursor-not-allowed opacity-40",
+                      )}
+                      aria-label={`Remove ${image.originalName}`}
+                    >
+                      <Trash2 className="size-4" aria-hidden />
+                    </button>
                   </div>
                 )}
                 <p className="truncate font-mono text-[10px] text-[#3A344E] dark:text-white/50">

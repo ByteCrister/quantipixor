@@ -122,6 +122,18 @@ export const useImageCompressorStore = create<ImageCompressorStore>(
             });
         },
 
+        restoreImageAt: (item: ImageItem, index: number) => {
+            set((state) => {
+                if (state.images.length >= MAX_TOTAL_IMAGES) return state;
+                const previewUrl = URL.createObjectURL(item.file);
+                const restored: ImageItem = { ...item, previewUrl };
+                const next = [...state.images];
+                const i = Math.min(Math.max(0, index), next.length);
+                next.splice(i, 0, restored);
+                return { images: next };
+            });
+        },
+
         clearAll: () => {
             set((state) => {
                 state.images.forEach((img) => {

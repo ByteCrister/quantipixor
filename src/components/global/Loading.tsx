@@ -112,16 +112,6 @@ const PageLoader: React.FC<PageLoaderProps> = ({
         exit={{ opacity: 0 }}
         transition={{ duration: 0.25 }}
       >
-        {/* Subtle grid texture */}
-        <div
-          className="pointer-events-none absolute inset-0 opacity-[0.03] dark:opacity-[0.06]"
-          style={{
-            backgroundImage:
-              "linear-gradient(#1856FF 1px, transparent 1px), linear-gradient(90deg, #1856FF 1px, transparent 1px)",
-            backgroundSize: "40px 40px",
-          }}
-        />
-
         {/* Card */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}

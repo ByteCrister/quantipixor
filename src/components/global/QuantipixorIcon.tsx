@@ -1,13 +1,13 @@
-import React from "react";
+// QuantipixorIcon.tsx
+"use client";
 
 export type QuantipixorIconProps = {
   className?: string;
-  /** If set, the icon is exposed to assistive tech; otherwise it is decorative. */
   "aria-label"?: string;
 };
 
 /**
- * Quantipixor brand mark — magic-wand / pixel motif used in header and footer.
+ * Quantipixor brand mark — bold, modern 'Q' letter icon.
  */
 export default function QuantipixorIcon({
   className = "h-6 w-6",
@@ -25,28 +25,30 @@ export default function QuantipixorIcon({
       aria-label={ariaLabel}
       role={decorative ? undefined : "img"}
     >
+      {/* Bold outer Q circle with thick stroke */}
       <path
-        d="M12 4L13.5 8.5L18 10L13.5 11.5L12 16L10.5 11.5L6 10L10.5 8.5L12 4Z"
-        fill="#1856FF"
-        fillOpacity="0.9"
-        stroke="#4F46E5"
-        strokeWidth="0.8"
+        d="M12 2.5C6.753 2.5 2.5 6.753 2.5 12C2.5 17.247 6.753 21.5 12 21.5C16.184 21.5 19.747 18.827 20.914 15.05"
+        stroke="url(#qGradient)"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        fill="none"
       />
+      {/* Bold Q tail */}
       <path
-        d="M18.5 7L19.5 9.5L22 10.5L19.5 11.5L18.5 14L17.5 11.5L15 10.5L17.5 9.5L18.5 7Z"
-        fill="#9333EA"
-        stroke="#7C3AED"
-        strokeWidth="0.6"
+        d="M19 18.5L22 21.5"
+        stroke="url(#qGradient)"
+        strokeWidth="2.5"
+        strokeLinecap="round"
       />
-      <path
-        d="M6.5 17L7.2 18.8L9 19.5L7.2 20.2L6.5 22L5.8 20.2L4 19.5L5.8 18.8L6.5 17Z"
-        fill="#1856FF"
-        fillOpacity="0.8"
-      />
-      <path
-        d="M15 17L15.8 18.2L17 19L15.8 19.8L15 21L14.2 19.8L13 19L14.2 18.2L15 17Z"
-        fill="#E89558"
-      />
+      {/* Inner accent dot for extra character */}
+      <circle cx="9.2" cy="9.2" r="1.3" fill="url(#qGradient)" />
+      
+      <defs>
+        <linearGradient id="qGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#1856FF" />
+          <stop offset="100%" stopColor="#9333EA" />
+        </linearGradient>
+      </defs>
     </svg>
   );
 }

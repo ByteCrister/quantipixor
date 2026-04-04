@@ -39,7 +39,7 @@ const Footer: React.FC = () => {
                 <QuantipixorIcon className="h-7 w-7" />
               </span>
               <div>
-                <p className="bg-gradient-to-r from-white via-[#c7d2fe] to-white/90 bg-clip-text text-lg font-bold tracking-tight text-transparent">
+                <p className="bg-linear-to-r from-white via-[#c7d2fe] to-white/90 bg-clip-text text-lg font-bold tracking-tight text-transparent">
                   Quantipixor
                 </p>
                 <p className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-white/45">
@@ -159,7 +159,7 @@ const Footer: React.FC = () => {
             © {currentYear} Quantipixor. All rights reserved.
           </p>
           <p className="text-xs text-white/40">
-            Built for clarity, speed, and trust — glassmorphism UI with keyboard-first interactions.
+            Built for clarity, speed, and trust — Sadiqul Islam Shakib.
           </p>
         </div>
       </div>

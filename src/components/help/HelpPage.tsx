@@ -13,28 +13,15 @@ import {
     Keyboard,
     MonitorSmartphone,
     Folder,
-    Image,
+    Image as ImgIcon,
     Sparkles,
     Shield,
     Globe,
     CheckCircle2,
     ArrowRight,
 } from "lucide-react";
+import { inter, spaceGrotesk } from "@/fonts/google-fonts";
 
-// ── Google Fonts (Inter & Space Grotesk) ──────────────────────────────────────
-import { Inter, Space_Grotesk } from "next/font/google";
-
-const inter = Inter({
-    subsets: ["latin"],
-    variable: "--font-inter",
-    display: "swap",
-});
-
-const spaceGrotesk = Space_Grotesk({
-    subsets: ["latin"],
-    variable: "--font-space-grotesk",
-    display: "swap",
-});
 
 // ── Enhanced Animation Variants ────────────────────────────────────────────────
 const fadeUp = (delay = 0) => ({
@@ -179,7 +166,7 @@ const SectionLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => 
         whileInView={{ opacity: 1, x: 0 }}
         viewport={{ once: true }}
         transition={{ duration: 0.4 }}
-        className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.2em] text-blue-700 shadow-sm dark:border-blue-800/30 dark:from-blue-950/40 dark:to-indigo-950/40 dark:text-blue-300"
+        className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-linear-to-r from-blue-50 to-indigo-50 px-4 py-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.2em] text-blue-700 shadow-sm dark:border-blue-800/30 dark:from-blue-950/40 dark:to-indigo-950/40 dark:text-blue-300"
     >
         <Sparkles size={12} className="text-blue-500 dark:text-blue-400" />
         {children}
@@ -195,11 +182,11 @@ const FaqItem: React.FC<{ q: string; a: string; index: number }> = ({ q, a, inde
             animate="rest"
             custom={index}
             {...fadeUp(index * 0.05)}
-            className="group overflow-hidden rounded-2xl border border-gray-200/80 bg-white/70 backdrop-blur-sm transition-all duration-300 hover:border-blue-300/50 hover:shadow-lg dark:border-white/[0.08] dark:bg-white/[0.03] dark:hover:border-blue-500/30"
+            className="group overflow-hidden rounded-2xl border border-gray-200/80 bg-white/70 backdrop-blur-sm transition-all duration-300 hover:border-blue-300/50 hover:shadow-lg dark:border-white/8 dark:bg-white/[0.03] dark:hover:border-blue-500/30"
         >
             <button
                 onClick={() => setOpen(!open)}
-                className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left transition-all duration-200 hover:bg-gray-50/50 dark:hover:bg-white/[0.04]"
+                className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left transition-all duration-200 hover:bg-gray-50/50 dark:hover:bg-white/4"
             >
                 <span className="text-sm font-medium text-gray-800 dark:text-white/80 group-hover:text-blue-600 dark:group-hover:text-blue-400">
                     {q}
@@ -220,7 +207,7 @@ const FaqItem: React.FC<{ q: string; a: string; index: number }> = ({ q, a, inde
                         exit={{ height: 0, opacity: 0 }}
                         transition={{ duration: 0.35, ease: [0.33, 1, 0.68, 1] }}
                     >
-                        <div className="border-t border-gray-200/50 px-6 pb-5 pt-4 dark:border-white/[0.05]">
+                        <div className="border-t border-gray-200/50 px-6 pb-5 pt-4 dark:border-white/5">
                             <p className="text-sm leading-relaxed text-gray-600 dark:text-white/45">{a}</p>
                         </div>
                     </motion.div>
@@ -246,11 +233,11 @@ const StepCard: React.FC<{ step: typeof STEPS[0]; index: number }> = ({ step, in
                 initial="rest"
                 whileHover="hover"
                 animate="rest"
-                className={`relative z-10 h-full rounded-2xl border border-gray-200/60 bg-gradient-to-br ${step.bgLight} ${step.bgDark} p-6 backdrop-blur-sm transition-all duration-300 dark:border-white/[0.08]`}
+                className={`relative z-10 h-full rounded-2xl border border-gray-200/60 bg-linear-to-br ${step.bgLight} ${step.bgDark} p-6 backdrop-blur-sm transition-all duration-300 dark:border-white/8`}
             >
                 {/* Decorative gradient circle */}
                 <div
-                    className={`absolute -right-4 -top-4 h-24 w-24 rounded-full bg-gradient-to-br ${step.gradient} opacity-10 blur-2xl transition-all duration-500 group-hover:opacity-20`}
+                    className={`absolute -right-4 -top-4 h-24 w-24 rounded-full bg-linear-to-br ${step.gradient} opacity-10 blur-2xl transition-all duration-500 group-hover:opacity-20`}
                 />
 
                 <div className="relative">
@@ -258,9 +245,9 @@ const StepCard: React.FC<{ step: typeof STEPS[0]; index: number }> = ({ step, in
                         variants={iconGlow}
                         initial="rest"
                         whileHover="hover"
-                        className="mb-5 inline-flex rounded-2xl bg-gradient-to-br from-white to-gray-100 p-3 shadow-md dark:from-gray-800 dark:to-gray-900"
+                        className="mb-5 inline-flex rounded-2xl bg-linear-to-br from-white to-gray-100 p-3 shadow-md dark:from-gray-800 dark:to-gray-900"
                     >
-                        <Icon className={`h-6 w-6 bg-gradient-to-br ${step.gradient} bg-clip-text text-transparent`} />
+                        <Icon className={`h-6 w-6 bg-linear-to-br ${step.gradient} bg-clip-text`} />
                     </motion.div>
 
                     <div className="mb-2 flex items-center justify-between">
@@ -300,7 +287,7 @@ const StepCard: React.FC<{ step: typeof STEPS[0]; index: number }> = ({ step, in
 export default function HelpPage() {
     return (
         <main
-            className={`${inter.variable} ${spaceGrotesk.variable} relative min-h-screen overflow-x-hidden bg-gradient-to-br from-gray-50 via-white to-gray-100 font-sans text-gray-900 dark:from-[#03050b] dark:via-[#060912] dark:to-[#0a0f1a] dark:text-white`}
+            className={`${inter.variable} ${spaceGrotesk.variable} relative min-h-screen overflow-x-hidden bg-linear-to-br from-gray-50 via-white to-gray-100 font-sans text-gray-900 dark:from-[#03050b] dark:via-[#060912] dark:to-[#0a0f1a] dark:text-white`}
         >
             {/* ── Enhanced Background Decorations ── */}
             <div className="pointer-events-none fixed inset-0 overflow-hidden">
@@ -311,7 +298,7 @@ export default function HelpPage() {
                         y: [0, -20, 0],
                     }}
                     transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
-                    className="absolute -left-32 top-20 h-80 w-80 rounded-full bg-gradient-to-r from-blue-400/20 to-indigo-500/20 blur-3xl dark:from-blue-600/10 dark:to-indigo-700/10"
+                    className="absolute -left-32 top-20 h-80 w-80 rounded-full bg-linear-to-r from-blue-400/20 to-indigo-500/20 blur-3xl dark:from-blue-600/10 dark:to-indigo-700/10"
                 />
                 <motion.div
                     animate={{
@@ -319,7 +306,7 @@ export default function HelpPage() {
                         y: [0, 30, 0],
                     }}
                     transition={{ duration: 18, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-                    className="absolute -bottom-40 right-10 h-96 w-96 rounded-full bg-gradient-to-r from-purple-400/15 to-pink-500/15 blur-3xl dark:from-purple-600/8 dark:to-pink-700/8"
+                    className="absolute -bottom-40 right-10 h-96 w-96 rounded-full bg-linear-to-r from-purple-400/15 to-pink-500/15 blur-3xl dark:from-purple-600/8 dark:to-pink-700/8"
                 />
                 <motion.div
                     animate={{
@@ -353,7 +340,7 @@ export default function HelpPage() {
                         initial={{ scale: 0.9, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
                         transition={{ delay: 0.2, duration: 0.5 }}
-                        className="mb-4 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-500/10 to-indigo-500/10 px-4 py-1.5 text-sm font-medium text-blue-700 backdrop-blur-sm dark:from-blue-400/10 dark:to-indigo-400/10 dark:text-blue-300"
+                        className="mb-4 inline-flex items-center gap-2 rounded-full bg-linear-to-r from-blue-500/10 to-indigo-500/10 px-4 py-1.5 text-sm font-medium text-blue-700 backdrop-blur-sm dark:from-blue-400/10 dark:to-indigo-400/10 dark:text-blue-300"
                     >
                         <Sparkles size={16} />
                         <span>Quantipixor Help Center</span>
@@ -363,7 +350,7 @@ export default function HelpPage() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.3, duration: 0.6 }}
-                        className="mb-4 bg-gradient-to-r from-gray-900 via-blue-800 to-gray-900 bg-clip-text text-4xl font-bold tracking-tight text-transparent dark:from-white dark:via-blue-300 dark:to-white sm:text-5xl lg:text-6xl"
+                        className="mb-4 bg-linear-to-r from-gray-900 via-blue-800 to-gray-900 bg-clip-text text-4xl font-bold tracking-tight text-transparent dark:from-white dark:via-blue-300 dark:to-white sm:text-5xl lg:text-6xl"
                         style={{ fontFamily: "var(--font-space-grotesk)" }}
                     >
                         How to compress <br /> images like a pro
@@ -417,12 +404,12 @@ export default function HelpPage() {
                         initial="hidden"
                         whileInView="show"
                         viewport={{ once: true }}
-                        className="overflow-hidden rounded-2xl border border-gray-200/80 bg-white/50 backdrop-blur-sm dark:border-white/[0.08] dark:bg-white/[0.02]"
+                        className="overflow-hidden rounded-2xl border border-gray-200/80 bg-white/50 backdrop-blur-sm dark:border-white/8 dark:bg-white/2"
                     >
                         <div className="overflow-x-auto">
                             <table className="w-full">
                                 <thead>
-                                    <tr className="border-b border-gray-200/80 bg-gray-50/50 dark:border-white/[0.05] dark:bg-white/[0.02]">
+                                    <tr className="border-b border-gray-200/80 bg-gray-50/50 dark:border-white/5 dark:bg-white/2">
                                         <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 dark:text-white/70">
                                             Setting
                                         </th>
@@ -444,7 +431,7 @@ export default function HelpPage() {
                                             <motion.tr
                                                 key={row.setting}
                                                 variants={fadeUp(idx * 0.05)}
-                                                className="border-b border-gray-200/50 transition-colors hover:bg-gray-50/40 dark:border-white/[0.04] dark:hover:bg-white/[0.02]"
+                                                className="border-b border-gray-200/50 transition-colors hover:bg-gray-50/40 dark:border-white/4 dark:hover:bg-white/2"
                                             >
                                                 <td className="px-6 py-4">
                                                     <div className="flex items-center gap-2">
@@ -490,7 +477,7 @@ export default function HelpPage() {
                         initial="hidden"
                         whileInView="show"
                         viewport={{ once: true }}
-                        className="overflow-hidden rounded-2xl border border-gray-200/80 bg-white/50 p-6 backdrop-blur-sm dark:border-white/[0.08] dark:bg-white/[0.03]"
+                        className="overflow-hidden rounded-2xl border border-gray-200/80 bg-white/50 p-6 backdrop-blur-sm dark:border-white/8 dark:bg-white/3"
                     >
                         <motion.div
                             variants={fadeUp(0)}
@@ -519,7 +506,7 @@ export default function HelpPage() {
                                     {type === "folder" ? (
                                         <Folder size={14} className="shrink-0 text-blue-500" />
                                     ) : (
-                                        <Image size={14} className="shrink-0 text-gray-400" />
+                                        <ImgIcon size={14} className="shrink-0 text-gray-400" />
                                     )}
                                     <span
                                         className={
@@ -536,7 +523,7 @@ export default function HelpPage() {
 
                         <motion.div
                             variants={fadeUp(0.2)}
-                            className="mt-6 flex items-start gap-3 rounded-xl border border-blue-200/60 bg-gradient-to-r from-blue-50/50 to-indigo-50/50 px-5 py-4 dark:border-blue-800/20 dark:from-blue-950/20 dark:to-indigo-950/20"
+                            className="mt-6 flex items-start gap-3 rounded-xl border border-blue-200/60 bg-linear-to-r from-blue-50/50 to-indigo-50/50 px-5 py-4 dark:border-blue-800/20 dark:from-blue-950/20 dark:to-indigo-950/20"
                         >
                             <Info size={16} className="mt-0.5 shrink-0 text-blue-600 dark:text-blue-400" />
                             <p className="text-xs leading-relaxed text-gray-700 dark:text-white/45">
@@ -589,14 +576,14 @@ export default function HelpPage() {
                                 ok: false,
                                 icon: MonitorSmartphone,
                             },
-                        ].map(({ browser, support, note, ok, icon: Icon }, idx) => (
+                        ].map(({ browser, support, note, ok, icon: Icon }) => (
                             <motion.div
                                 key={browser}
                                 variants={cardHover}
                                 initial="rest"
                                 whileHover="hover"
                                 animate="rest"
-                                className="rounded-2xl border border-gray-200/80 bg-white/50 p-5 backdrop-blur-sm transition-all dark:border-white/[0.08] dark:bg-white/[0.03]"
+                                className="rounded-2xl border border-gray-200/80 bg-white/50 p-5 backdrop-blur-sm transition-all dark:border-white/8 dark:bg-white/3"
                             >
                                 <div className="mb-4 flex items-center justify-between">
                                     <div className="flex items-center gap-2">
@@ -629,7 +616,7 @@ export default function HelpPage() {
 
                     <motion.div
                         variants={fadeUp(0.2)}
-                        className="mt-6 flex items-start gap-3 rounded-xl border border-blue-200/60 bg-gradient-to-r from-blue-50/50 to-indigo-50/50 px-5 py-4 dark:border-blue-800/20 dark:from-blue-950/20 dark:to-indigo-950/20"
+                        className="mt-6 flex items-start gap-3 rounded-xl border border-blue-200/60 bg-linear-to-r from-blue-50/50 to-indigo-50/50 px-5 py-4 dark:border-blue-800/20 dark:from-blue-950/20 dark:to-indigo-950/20"
                     >
                         <Keyboard size={16} className="mt-0.5 shrink-0 text-blue-600 dark:text-blue-400" />
                         <p className="text-xs leading-relaxed text-gray-700 dark:text-white/45">

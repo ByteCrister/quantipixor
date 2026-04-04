@@ -3,6 +3,7 @@ import sharp from 'sharp';
 import JSZip from 'jszip';
 import toIco from 'to-ico';
 
+// Unique sizes needed for PNG files
 const PNG_SIZES = [
     { size: 16, name: 'favicon-16x16.png' },
     { size: 32, name: 'favicon-32x32.png' },
@@ -14,7 +15,11 @@ const PNG_SIZES = [
     { size: 180, name: 'apple-touch-icon.png' },
 ];
 
+// Unique sizes needed for ICO
 const ICO_SIZES = [16, 32, 48, 64, 128, 256];
+
+// Combine and deduplicate all needed sizes
+const ALL_SIZES = [...new Set([...PNG_SIZES.map(s => s.size), ...ICO_SIZES])].sort((a,b) => a - b);
 
 export async function POST(req: NextRequest) {
     try {
@@ -22,33 +27,46 @@ export async function POST(req: NextRequest) {
         const file = formData.get('image') as Blob;
         if (!file) throw new Error('No image provided');
 
+        // Validate file size and type: 10MB max
+        if (file.size > 10 * 1024 * 1024) {
+            throw new Error('Image too large (max 5MB)');
+        }
+        if (!file.type.startsWith('image/')) {
+            throw new Error('Invalid file type');
+        }
+
         const buffer = Buffer.from(await file.arrayBuffer());
         const zip = new JSZip();
 
-        // 1. Generate all PNG icons
-        for (const { size, name } of PNG_SIZES) {
+        // 1. Generate resized PNG buffers for all needed sizes in parallel
+        const resizePromises = ALL_SIZES.map(async (size) => {
             const resized = await sharp(buffer)
-                .resize(size, size, { fit: 'cover' })
+                .resize(size, size, {
+                    fit: 'cover',
+                    withoutEnlargement: true,   // don't upscale if original is smaller
+                })
                 .png()
                 .toBuffer();
-            zip.file(name, resized);
+            return { size, buffer: resized };
+        });
+
+        const resizedBuffers = await Promise.all(resizePromises);
+        const bufferMap = new Map(resizedBuffers.map(item => [item.size, item.buffer]));
+
+        // 2. Add PNG files to ZIP (only those defined in PNG_SIZES)
+        for (const { size, name } of PNG_SIZES) {
+            const pngBuffer = bufferMap.get(size);
+            if (pngBuffer) zip.file(name, pngBuffer);
         }
 
-        // 2. Generate PNGs for each ICO size
-        const icoPngBuffers = await Promise.all(
-            ICO_SIZES.map(async (size) => {
-                return await sharp(buffer)
-                    .resize(size, size, { fit: 'cover' })
-                    .png()
-                    .toBuffer();
-            })
-        );
+        // 3. Collect PNG buffers for ICO (only sizes defined in ICO_SIZES)
+        const icoPngBuffers = ICO_SIZES.map(size => bufferMap.get(size)).filter((buf): buf is Buffer => buf !== undefined);
+        if (icoPngBuffers.length) {
+            const icoBuffer = await toIco(icoPngBuffers);
+            zip.file('favicon.ico', icoBuffer);
+        }
 
-        // 3. Combine PNGs into a single .ico file using to-ico
-        const icoBuffer = await toIco(icoPngBuffers);
-        zip.file('favicon.ico', icoBuffer);
-
-        // 4. Add manifest and browserconfig
+        // 4. Add web manifest
         const manifest = {
             name: 'My App',
             icons: PNG_SIZES.map(({ size, name }) => ({
@@ -59,6 +77,7 @@ export async function POST(req: NextRequest) {
         };
         zip.file('site.webmanifest', JSON.stringify(manifest, null, 2));
 
+        // 5. Add browserconfig.xml and mstile
         const browserConfig = `<?xml version="1.0" encoding="utf-8"?>
 <browserconfig>
   <msapplication>
@@ -70,11 +89,11 @@ export async function POST(req: NextRequest) {
 </browserconfig>`;
         zip.file('browserconfig.xml', browserConfig);
 
-        // 5. Generate 150x150 mstile
-        const mstileBlob = await sharp(buffer).resize(150, 150).png().toBuffer();
-        zip.file('mstile-150x150.png', mstileBlob);
+        // Generate 150×150 mstile (if not already present in PNG_SIZES, we add it)
+        const mstileBuffer = await sharp(buffer).resize(150, 150).png().toBuffer();
+        zip.file('mstile-150x150.png', mstileBuffer);
 
-        // 6. Create ZIP
+        // 6. Create ZIP and return
         const zipBuffer = await zip.generateAsync({ type: 'nodebuffer' });
         const zipUint8 = new Uint8Array(zipBuffer);
 
@@ -87,6 +106,9 @@ export async function POST(req: NextRequest) {
         });
     } catch (error) {
         console.error(error);
-        return NextResponse.json({ error: 'Generation failed' }, { status: 500 });
+        return NextResponse.json(
+            { error: error instanceof Error ? error.message : 'Generation failed' },
+            { status: 500 }
+        );
     }
 }

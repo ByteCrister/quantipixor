@@ -24,26 +24,9 @@ import {
   HardDrive,
 } from "lucide-react";
 
-// ── Google Fonts (Next.js optimized) ──────────────────────────────────────────
-import { Inter, Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
+import { SOCIAL_LINKS } from "@/const/social-links";
+import { inter, jetbrainsMono, plusJakarta } from "@/fonts/google-fonts";
 
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-  display: "swap",
-});
-
-const plusJakarta = Plus_Jakarta_Sans({
-  subsets: ["latin"],
-  variable: "--font-plus-jakarta",
-  display: "swap",
-});
-
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ["latin"],
-  variable: "--font-mono",
-  display: "swap",
-});
 
 // ── Animation helpers (enhanced) ──────────────────────────────────────────────
 const fadeUp = (delay = 0) => ({
@@ -131,15 +114,15 @@ const TECH_STACK = [
   { icon: SiFramer, label: "Framer Motion" },
 ];
 
-const SOCIAL_LINKS = [
-  { icon: SiGithub, label: "GitHub", href: "https://github.com/ByteCrister" },
+const SocialLinks = [
+  { icon: SiGithub, label: "GitHub", href: SOCIAL_LINKS.GITHUB },
   {
     icon: SiLinkerd,
     label: "LinkedIn",
-    href: "https://www.linkedin.com/in/sadiqul-islam-shakib",
+    href: SOCIAL_LINKS.LINKEDIN,
   },
-  { icon: SiFacebook, label: "Facebook", href: "#" },
-  { icon: SiInstagram, label: "Instagram", href: "#" },
+  { icon: SiFacebook, label: "Facebook", href: SOCIAL_LINKS.FACEBOOK },
+  { icon: SiInstagram, label: "Instagram", href: SOCIAL_LINKS.INSTAGRAM },
 ];
 
 // ── Enhanced GlassCard with hover animations ──────────────────────────────────
@@ -160,7 +143,7 @@ const GlassCard: React.FC<{
       relative rounded-2xl border p-6 transition-all duration-300
       bg-white/80 backdrop-blur-sm
       border-gray-200 shadow-sm
-      dark:bg-white/[0.04] dark:backdrop-blur-md
+      dark:bg-white/4 dark:backdrop-blur-md
       dark:border-white/[0.07] dark:shadow-none
       hover:shadow-xl hover:border-indigo-300/50 dark:hover:border-indigo-500/40
       ${className}
@@ -202,7 +185,7 @@ export default function AboutPage() {
             scale: [1, 1.1, 1],
           }}
           transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute -top-40 -left-40 h-[520px] w-[520px] rounded-full bg-gradient-to-br from-indigo-500/20 via-purple-500/10 to-transparent blur-[100px] dark:from-indigo-600/20 dark:via-purple-600/10"
+          className="absolute -top-40 -left-40 h-130 w-130 rounded-full bg-linear-to-br from-indigo-500/20 via-purple-500/10 to-transparent blur-[100px] dark:from-indigo-600/20 dark:via-purple-600/10"
         />
         <motion.div
           animate={{
@@ -211,7 +194,7 @@ export default function AboutPage() {
             scale: [1, 1.2, 1],
           }}
           transition={{ duration: 25, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-          className="absolute -bottom-32 -right-32 h-[420px] w-[420px] rounded-full bg-gradient-to-tl from-purple-500/20 via-pink-500/10 to-transparent blur-[90px] dark:from-purple-600/20 dark:via-pink-600/10"
+          className="absolute -bottom-32 -right-32 h-105 w-105 rounded-full bg-linear-to-tl from-purple-500/20 via-pink-500/10 to-transparent blur-[90px] dark:from-purple-600/20 dark:via-pink-600/10"
         />
         {/* Grid overlay */}
         <div
@@ -233,13 +216,13 @@ export default function AboutPage() {
 
           <motion.h1
             {...fadeUp(0.08)}
-            className="mb-4 bg-gradient-to-r from-gray-900 via-indigo-600 to-purple-600 bg-clip-text font-['Plus_Jakarta_Sans'] text-5xl font-extrabold tracking-tight text-transparent dark:from-white dark:via-indigo-300 dark:to-purple-300 sm:text-6xl"
+            className="mb-4 bg-linear-to-r from-gray-900 via-indigo-600 to-purple-600 bg-clip-text font-['Plus_Jakarta_Sans'] text-5xl font-extrabold tracking-tight text-transparent dark:from-white dark:via-indigo-300 dark:to-purple-300 sm:text-6xl"
           >
             Quanti
             <motion.span
               whileHover={{ scale: 1.05, display: "inline-block" }}
               transition={{ type: "spring", stiffness: 400 }}
-              className="bg-gradient-to-r from-indigo-500 to-purple-500 bg-clip-text text-transparent"
+              className="bg-linear-to-r from-indigo-500 to-purple-500 bg-clip-text text-transparent"
             >
               pixor
             </motion.span>
@@ -271,9 +254,9 @@ export default function AboutPage() {
                 key={lbl}
                 variants={staggerItem}
                 whileHover={{ y: -3, scale: 1.05 }}
-                className="flex cursor-default items-center gap-2 rounded-full border border-gray-200 bg-gray-50/80 px-4 py-2 backdrop-blur-sm transition-all dark:border-white/[0.08] dark:bg-white/[0.04]"
+                className="flex cursor-default items-center gap-2 rounded-full border border-gray-200 bg-gray-50/80 px-4 py-2 backdrop-blur-sm transition-all dark:border-white/8 dark:bg-white/4"
               >
-                <span className="font-mono text-sm font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                <span className="font-mono text-sm font-bold bg-linear-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
                   {val}
                 </span>
                 <span className="text-xs text-gray-500 dark:text-white/40">{lbl}</span>
@@ -312,7 +295,7 @@ export default function AboutPage() {
                 <motion.div
                   whileHover={{ rotate: 5, scale: 1.1 }}
                   transition={{ type: "spring", stiffness: 300 }}
-                  className="mb-3 flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 dark:from-indigo-500/30 dark:to-purple-500/30"
+                  className="mb-3 flex h-9 w-9 items-center justify-center rounded-xl bg-linear-to-br from-indigo-500/20 to-purple-500/20 dark:from-indigo-500/30 dark:to-purple-500/30"
                 >
                   <Icon size={18} className="text-indigo-600 dark:text-indigo-400" />
                 </motion.div>
@@ -355,7 +338,7 @@ export default function AboutPage() {
                   color: "#4F46E5",
                 }}
                 transition={{ type: "spring", stiffness: 400 }}
-                className="cursor-default rounded-lg border border-gray-200 bg-gray-50 px-3 py-1 font-mono text-xs text-gray-600 transition-all dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-white/60"
+                className="cursor-default rounded-lg border border-gray-200 bg-gray-50 px-3 py-1 font-mono text-xs text-gray-600 transition-all dark:border-white/8 dark:bg-white/4 dark:text-white/60"
               >
                 .{fmt.toLowerCase()}
               </motion.span>
@@ -365,9 +348,9 @@ export default function AboutPage() {
 
         {/* ── Privacy Statement with hover shine ── */}
         <section className="mb-24">
-          <GlassCard className="relative overflow-hidden border-indigo-300/50 bg-gradient-to-br from-indigo-50/50 to-purple-50/50 dark:border-indigo-500/30 dark:from-indigo-500/10 dark:to-purple-500/10">
+          <GlassCard className="relative overflow-hidden border-indigo-300/50 bg-linear-to-br from-indigo-50/50 to-purple-50/50 dark:border-indigo-500/30 dark:from-indigo-500/10 dark:to-purple-500/10">
             <motion.div
-              className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent"
+              className="absolute inset-0 -translate-x-full bg-linear-to-r from-transparent via-white/20 to-transparent"
               animate={{ x: ["0%", "200%"] }}
               transition={{ duration: 6, repeat: Infinity, ease: "linear", repeatDelay: 3 }}
             />
@@ -417,7 +400,7 @@ export default function AboutPage() {
                   borderColor: "#4F46E5",
                   boxShadow: "0 10px 25px -5px rgba(79,70,229,0.2)",
                 }}
-                className="flex cursor-default items-center gap-2 rounded-xl border border-gray-200 bg-gray-50/80 px-4 py-2.5 backdrop-blur-sm transition-all dark:border-white/[0.07] dark:bg-white/[0.04]"
+                className="flex cursor-default items-center gap-2 rounded-xl border border-gray-200 bg-gray-50/80 px-4 py-2.5 backdrop-blur-sm transition-all dark:border-white/[0.07] dark:bg-white/4"
               >
                 <Icon size={16} className="text-gray-600 dark:text-white/60" />
                 <span className="text-sm text-gray-700 dark:text-white/70">{label}</span>
@@ -428,7 +411,7 @@ export default function AboutPage() {
                 key={t}
                 variants={staggerItem}
                 whileHover={{ y: -4, scale: 1.05 }}
-                className="flex cursor-default items-center gap-2 rounded-xl border border-gray-200 bg-gray-50/80 px-4 py-2.5 backdrop-blur-sm dark:border-white/[0.07] dark:bg-white/[0.04]"
+                className="flex cursor-default items-center gap-2 rounded-xl border border-gray-200 bg-gray-50/80 px-4 py-2.5 backdrop-blur-sm dark:border-white/[0.07] dark:bg-white/4"
               >
                 <span className="text-sm text-gray-500 dark:text-white/50">{t}</span>
               </motion.div>
@@ -451,7 +434,7 @@ export default function AboutPage() {
                 initial={{ opacity: 0, x: -10 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2 }}
-                className="mb-1 font-['Plus_Jakarta_Sans'] text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent"
+                className="mb-1 font-['Plus_Jakarta_Sans'] text-xl font-bold bg-linear-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent"
               >
                 Sadiqul Islam Shakib
               </motion.p>
@@ -461,7 +444,7 @@ export default function AboutPage() {
             </div>
 
             <div className="flex gap-3">
-              {SOCIAL_LINKS.map(({ icon: Icon, label, href }) => (
+              {SocialLinks.map(({ icon: Icon, label, href }) => (
                 <motion.a
                   key={label}
                   href={href}
@@ -476,7 +459,7 @@ export default function AboutPage() {
                   }}
                   whileTap={{ scale: 0.95 }}
                   transition={{ type: "spring", stiffness: 400 }}
-                  className="flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 bg-gray-50 text-gray-500 transition-all dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-white/50"
+                  className="flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 bg-gray-50 text-gray-500 transition-all dark:border-white/8 dark:bg-white/4 dark:text-white/50"
                 >
                   <Icon size={18} />
                 </motion.a>

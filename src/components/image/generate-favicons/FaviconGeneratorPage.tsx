@@ -29,7 +29,7 @@ const DEFAULT_CONFIG: CompressionConfig = {
   maxFileSizeMB: 10,
   batchSize: 10,
   baseName: "favicon",
-  quality: 0.5,
+  quality: 0.2,
 };
 
 const FILE_ACCEPT = "image/png,image/jpeg,image/webp,image/jpg";
@@ -179,191 +179,191 @@ export default function FaviconGeneratorPage() {
   const canGenerate = Boolean(originalFile && croppedAreaPixels && !isGenerating);
 
   return (
-      <div className="relative mx-auto max-w-4xl px-4 py-8 md:px-6 md:py-12">
-        <div
-          className="pointer-events-none absolute -left-24 top-0 h-72 w-72 rounded-full bg-[#1856FF]/10 blur-3xl"
-          aria-hidden
-        />
-        <div
-          className="pointer-events-none absolute -right-16 top-32 h-56 w-56 rounded-full bg-[#3A344E]/15 blur-3xl"
-          aria-hidden
-        />
+    <div className="relative mx-auto max-w-4xl px-4 py-8 md:px-6 md:py-12">
+      <div
+        className="pointer-events-none absolute -left-24 top-0 h-72 w-72 rounded-full bg-[#1856FF]/10 blur-3xl"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute -right-16 top-32 h-56 w-56 rounded-full bg-[#3A344E]/15 blur-3xl"
+        aria-hidden
+      />
 
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35 }}
-          className="relative mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"
-        >
-          <div>
-            <Badge variant="secondary" className="font-mono text-[10px] tracking-[0.16em]">
-              Image tools
-            </Badge>
-            <h1 className="mt-3 text-3xl font-bold tracking-tight text-[#141414] dark:text-white md:text-4xl">
-              Favicon{" "}
-              <span className="bg-linear-to-r from-[#1856FF] to-[#3A344E] bg-clip-text text-transparent dark:from-[#a5c4ff] dark:to-white/90">
-                generator
-              </span>
-            </h1>
-            <p className="mt-2 max-w-xl text-[#141414]/70 dark:text-white/65">
-              Upload artwork, crop to a square, then download a ZIP with standard PNG sizes,
-              a multi-size .ico, web manifest, and browserconfig — all processed locally in
-              your browser until you generate the pack.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Badge variant="success" className="gap-1.5">
-              <CheckCircle2 className="size-3" aria-hidden />
-              Private
-            </Badge>
-            <Badge variant="outline" className="font-mono text-[10px]">
-              Max {DEFAULT_CONFIG.maxFileSizeMB} MB
-            </Badge>
-          </div>
-        </motion.div>
-
-        <div className="mb-6 flex flex-wrap gap-2">
-          {["PNG 16–512", "Apple touch", "favicon.ico", "site.webmanifest", "browserconfig"].map(
-            (label) => (
-              <Badge key={label} variant="secondary" className="font-normal">
-                {label}
-              </Badge>
-            ),
-          )}
-        </div>
-
-        <Card className="mb-6 border-black/6 dark:border-white/10">
-          <CardContent className="p-6">
-            <div
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-              className={cn(
-                "relative rounded-3xl border-2 border-dashed p-8 text-center transition-all",
-                isDragging
-                  ? "border-[#1856FF] bg-[#1856FF]/8 shadow-[0_0_0_4px_rgba(24,86,255,0.12)]"
-                  : "border-[#3A344E]/20 bg-[color-mix(in_srgb,var(--surface)_85%,transparent)] backdrop-blur-md dark:border-white/10",
-              )}
-            >
-              <input
-                id="favicon-file-upload"
-                type="file"
-                accept={FILE_ACCEPT}
-                onChange={handleFileSelect}
-                className="sr-only"
-              />
-              <CloudUpload
-                className="mx-auto size-12 text-[#1856FF] opacity-90"
-                strokeWidth={1.25}
-                aria-hidden
-              />
-              <label
-                htmlFor="favicon-file-upload"
-                className="mt-4 block cursor-pointer"
-              >
-                <span className="inline-flex items-center justify-center rounded-full bg-[#1856FF] px-6 py-2.5 text-sm font-semibold text-white shadow-[0_10px_28px_-6px_rgba(24,86,255,0.55)] ring-1 ring-white/20 transition hover:bg-[#0E4ADB] dark:ring-white/10">
-                  Choose image
-                </span>
-              </label>
-              <p className="mt-3 text-sm text-[#141414]/65 dark:text-white/55">
-                PNG, JPEG, or WebP · or drag and drop here
-              </p>
-            </div>
-
-            {originalFile && (
-              <div className="mt-4 flex items-center gap-2 rounded-2xl border border-[#1856FF]/15 bg-[#1856FF]/5 px-4 py-3 text-sm text-[#141414]/80 dark:border-[#1856FF]/25 dark:text-white/75">
-                <ImageIcon className="size-4 shrink-0 text-[#1856FF]" aria-hidden />
-                <span className="min-w-0 truncate font-mono text-xs">
-                  {originalFile.name}
-                </span>
-                <span className="shrink-0 text-[#3A344E]/80 dark:text-white/50">
-                  ({formatBytes(originalFile.size)})
-                </span>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {imageUrl && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            className="mb-6 overflow-hidden"
-          >
-            <Card className="overflow-hidden border-black/6 dark:border-white/10">
-              <CardContent className="space-y-4 p-0">
-                <div className="relative h-[min(22rem,70vw)] w-full bg-[#3A344E]/5 dark:bg-white/5 sm:h-96">
-                  <Cropper
-                    image={imageUrl}
-                    crop={crop}
-                    zoom={zoom}
-                    aspect={1}
-                    onCropChange={setCrop}
-                    onZoomChange={setZoom}
-                    onCropComplete={onCropComplete}
-                  />
-                </div>
-                <div className="space-y-2 px-4 pb-4 sm:px-6">
-                  <div className="flex items-center gap-2 text-sm font-semibold text-[#141414] dark:text-white">
-                    <ZoomIn className="size-4 text-[#1856FF]" aria-hidden />
-                    Zoom
-                  </div>
-                  <input
-                    type="range"
-                    min={1}
-                    max={3}
-                    step={0.05}
-                    value={zoom}
-                    onChange={(e) => setZoom(Number(e.target.value))}
-                    className="h-2 w-full cursor-pointer accent-[#1856FF]"
-                    aria-valuemin={1}
-                    aria-valuemax={3}
-                    aria-valuenow={zoom}
-                    aria-label="Crop zoom"
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        )}
-
-        {error && (
-          <div
-            className="mb-6 flex gap-3 rounded-2xl border border-[#EA2143]/30 bg-[color-mix(in_srgb,var(--surface)_92%,#EA2143)] px-4 py-3 dark:bg-[#EA2143]/12"
-            role="alert"
-          >
-            <AlertCircle
-              className="mt-0.5 size-5 shrink-0 text-[#EA2143]"
-              aria-hidden
-            />
-            <p className="text-sm text-[#141414]/90 dark:text-white/90">{error}</p>
-          </div>
-        )}
-
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <Button
-            size="lg"
-            disabled={!canGenerate}
-            onClick={() => void handleGenerate()}
-            className="w-full sm:w-auto"
-          >
-            {isGenerating ? (
-              <>
-                <Loader2 className="size-5 animate-spin" aria-hidden />
-                Generating…
-              </>
-            ) : (
-              <>
-                <Archive className="size-5" aria-hidden />
-                Generate & download ZIP
-              </>
-            )}
-          </Button>
-          <p className="text-center text-xs text-[#141414]/50 dark:text-white/45 sm:text-left">
-            <Sparkles className="mr-1 inline size-3.5 text-[#1856FF]" aria-hidden />
-            Square crop keeps icons sharp at every size.
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35 }}
+        className="relative mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"
+      >
+        <div>
+          <Badge variant="secondary" className="font-mono text-[10px] tracking-[0.16em]">
+            Image tools
+          </Badge>
+          <h1 className="mt-3 text-3xl font-bold tracking-tight text-[#141414] dark:text-white md:text-4xl">
+            Favicon{" "}
+            <span className="bg-linear-to-r from-[#1856FF] to-[#3A344E] bg-clip-text text-transparent dark:from-[#a5c4ff] dark:to-white/90">
+              generator
+            </span>
+          </h1>
+          <p className="mt-2 max-w-xl text-[#141414]/70 dark:text-white/65">
+            Upload artwork, crop to a square, then download a ZIP with standard PNG sizes,
+            a multi-size .ico, web manifest, and browserconfig — all processed locally in
+            your browser until you generate the pack.
           </p>
         </div>
+        <div className="flex flex-wrap gap-2">
+          <Badge variant="success" className="gap-1.5">
+            <CheckCircle2 className="size-3" aria-hidden />
+            Private
+          </Badge>
+          <Badge variant="outline" className="font-mono text-[10px]">
+            Max {DEFAULT_CONFIG.maxFileSizeMB} MB
+          </Badge>
+        </div>
+      </motion.div>
+
+      <div className="mb-6 flex flex-wrap gap-2">
+        {["PNG 16–512", "Apple touch", "favicon.ico", "site.webmanifest", "browserconfig"].map(
+          (label) => (
+            <Badge key={label} variant="secondary" className="font-normal">
+              {label}
+            </Badge>
+          ),
+        )}
       </div>
+
+      <Card className="mb-6 border-black/6 dark:border-white/10">
+        <CardContent className="p-6">
+          <div
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            className={cn(
+              "relative rounded-3xl border-2 border-dashed p-8 text-center transition-all",
+              isDragging
+                ? "border-[#1856FF] bg-[#1856FF]/8 shadow-[0_0_0_4px_rgba(24,86,255,0.12)]"
+                : "border-[#3A344E]/20 bg-[color-mix(in_srgb,var(--surface)_85%,transparent)] backdrop-blur-md dark:border-white/10",
+            )}
+          >
+            <input
+              id="favicon-file-upload"
+              type="file"
+              accept={FILE_ACCEPT}
+              onChange={handleFileSelect}
+              className="sr-only"
+            />
+            <CloudUpload
+              className="mx-auto size-12 text-[#1856FF] opacity-90"
+              strokeWidth={1.25}
+              aria-hidden
+            />
+            <label
+              htmlFor="favicon-file-upload"
+              className="mt-4 block cursor-pointer"
+            >
+              <span className="inline-flex items-center justify-center rounded-full bg-[#1856FF] px-6 py-2.5 text-sm font-semibold text-white shadow-[0_10px_28px_-6px_rgba(24,86,255,0.55)] ring-1 ring-white/20 transition hover:bg-[#0E4ADB] dark:ring-white/10">
+                Choose image
+              </span>
+            </label>
+            <p className="mt-3 text-sm text-[#141414]/65 dark:text-white/55">
+              PNG, JPEG, or WebP · or drag and drop here
+            </p>
+          </div>
+
+          {originalFile && (
+            <div className="mt-4 flex items-center gap-2 rounded-2xl border border-[#1856FF]/15 bg-[#1856FF]/5 px-4 py-3 text-sm text-[#141414]/80 dark:border-[#1856FF]/25 dark:text-white/75">
+              <ImageIcon className="size-4 shrink-0 text-[#1856FF]" aria-hidden />
+              <span className="min-w-0 truncate font-mono text-xs">
+                {originalFile.name}
+              </span>
+              <span className="shrink-0 text-[#3A344E]/80 dark:text-white/50">
+                ({formatBytes(originalFile.size)})
+              </span>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {imageUrl && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: "auto" }}
+          className="mb-6 overflow-hidden"
+        >
+          <Card className="overflow-hidden border-black/6 dark:border-white/10">
+            <CardContent className="space-y-4 p-0">
+              <div className="relative h-[min(22rem,70vw)] w-full bg-[#3A344E]/5 dark:bg-white/5 sm:h-96">
+                <Cropper
+                  image={imageUrl}
+                  crop={crop}
+                  zoom={zoom}
+                  aspect={1}
+                  onCropChange={setCrop}
+                  onZoomChange={setZoom}
+                  onCropComplete={onCropComplete}
+                />
+              </div>
+              <div className="space-y-2 px-4 pb-4 sm:px-6">
+                <div className="flex items-center gap-2 text-sm font-semibold text-[#141414] dark:text-white">
+                  <ZoomIn className="size-4 text-[#1856FF]" aria-hidden />
+                  Zoom
+                </div>
+                <input
+                  type="range"
+                  min={1}
+                  max={3}
+                  step={0.05}
+                  value={zoom}
+                  onChange={(e) => setZoom(Number(e.target.value))}
+                  className="h-2 w-full cursor-pointer accent-[#1856FF]"
+                  aria-valuemin={1}
+                  aria-valuemax={3}
+                  aria-valuenow={zoom}
+                  aria-label="Crop zoom"
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
+
+      {error && (
+        <div
+          className="mb-6 flex gap-3 rounded-2xl border border-[#EA2143]/30 bg-[color-mix(in_srgb,var(--surface)_92%,#EA2143)] px-4 py-3 dark:bg-[#EA2143]/12"
+          role="alert"
+        >
+          <AlertCircle
+            className="mt-0.5 size-5 shrink-0 text-[#EA2143]"
+            aria-hidden
+          />
+          <p className="text-sm text-[#141414]/90 dark:text-white/90">{error}</p>
+        </div>
+      )}
+
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <Button
+          size="lg"
+          disabled={!canGenerate}
+          onClick={() => void handleGenerate()}
+          className="w-full sm:w-auto"
+        >
+          {isGenerating ? (
+            <>
+              <Loader2 className="size-5 animate-spin" aria-hidden />
+              Generating…
+            </>
+          ) : (
+            <>
+              <Archive className="size-5" aria-hidden />
+              Generate & download ZIP
+            </>
+          )}
+        </Button>
+        <p className="text-center text-xs text-[#141414]/50 dark:text-white/45 sm:text-left">
+          <Sparkles className="mr-1 inline size-3.5 text-[#1856FF]" aria-hidden />
+          Square crop keeps icons sharp at every size.
+        </p>
+      </div>
+    </div>
   );
 }

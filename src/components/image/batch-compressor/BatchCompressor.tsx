@@ -37,11 +37,10 @@ import {
 } from "@/hooks/useImageCompressor";
 import { useImageCompressorStore } from "@/store/imageCompressorStore";
 import { toast } from "@/store/toastStore";
-import { formatBytes } from "@/utils/image/formatBytes";
+import { formatBytes } from "@/utils/image/compressors/formatBytes";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Toaster } from "@/components/ui/toaster";
 import {
   BatchActionConfirmDialog,
   type BatchConfirmAction,
@@ -263,7 +262,6 @@ export default function BatchCompressor() {
         imageCount={images.length}
         onConfirm={handleConfirmAction}
       />
-      <Toaster />
       <div className="relative mx-auto max-w-6xl px-4 py-8 md:px-6 md:py-12">
         <div
           className="pointer-events-none absolute -left-24 top-0 h-72 w-72 rounded-full bg-[#1856FF]/10 blur-3xl"

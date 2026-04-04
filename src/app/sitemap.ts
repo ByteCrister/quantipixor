@@ -7,9 +7,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
     const routes = [
         { path: "/", priority: 1.0 },
-        { path: "/image/batch-compressor", priority: 0.8 },
-        // { path: "/features", priority: 0.9 },
-        // { path: "/how-to-use", priority: 0.85 },
+        { path: "/image/batch-compressor", priority: 0.9 },
+        { path: "/image/generate-favicon", priority: 0.9 },
+        { path: "/about", priority: 0.9 },
+        { path: "/help", priority: 0.85 },
     ];
 
     return routes.map((route) => ({

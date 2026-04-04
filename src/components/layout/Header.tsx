@@ -2,11 +2,12 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Image as ImageIcon, Repeat } from "lucide-react"; // added Repeat for converter button
 import QuantipixorIcon from "@/components/global/QuantipixorIcon";
 import { cn } from "@/lib/utils";
 
 const Header: React.FC = () => {
-  const router = useRouter();                          
+  const router = useRouter();
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -17,11 +18,19 @@ const Header: React.FC = () => {
   }, []);
 
   const handleLogoClick = () => {
-    router.push("/")
+    router.push("/");
   };
 
   const handleBatchCompressorClick = () => {
     router.push("/image/batch-compressor");
+  };
+
+  const handleGenerateFaviconsClick = () => {
+    router.push("/image/generate-favicon");
+  };
+
+  const handleImageConverterClick = () => {
+    router.push("/image/converter");
   };
 
   const navPillBtn =
@@ -98,6 +107,28 @@ const Header: React.FC = () => {
                   Help
                 </button>
               </div>
+
+              {/* Image Converter button */}
+              <button
+                type="button"
+                onClick={handleImageConverterClick}
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-black/20 bg-transparent px-3 py-2 text-sm font-medium text-foreground/80 transition-all hover:border-[#1856FF]/60 hover:bg-[#1856FF]/5 hover:text-[#1856FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1856FF]/40 focus-visible:ring-offset-2 dark:border-white/20 dark:text-white/70 dark:hover:border-white/40 dark:hover:bg-white/5 dark:hover:text-white dark:focus-visible:ring-offset-[#0c0b10]"
+                aria-label="Convert image format or to Base64"
+              >
+                <Repeat className="h-4 w-4" />
+                <span>Converter</span>
+              </button>
+
+              {/* Generate Favicons button */}
+              <button
+                type="button"
+                onClick={handleGenerateFaviconsClick}
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-black/20 bg-transparent px-3 py-2 text-sm font-medium text-foreground/80 transition-all hover:border-[#1856FF]/60 hover:bg-[#1856FF]/5 hover:text-[#1856FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1856FF]/40 focus-visible:ring-offset-2 dark:border-white/20 dark:text-white/70 dark:hover:border-white/40 dark:hover:bg-white/5 dark:hover:text-white dark:focus-visible:ring-offset-[#0c0b10]"
+                aria-label="Generate favicons for your website"
+              >
+                <ImageIcon className="h-4 w-4" />
+                <span>Favicons</span>
+              </button>
 
               <button
                 type="button"

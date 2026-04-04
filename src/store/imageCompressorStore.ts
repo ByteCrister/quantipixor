@@ -7,10 +7,10 @@ import {
     CompressionConfig,
     UploadStats,
 } from '@/types';
-import { computeFileHash } from '@/utils/image/hash';
-import { validateImage } from '@/utils/image/validation';
-import { compressImage } from '@/utils/image/compress';
-import { generateImagesZip } from '@/utils/image/zipGenerator';
+import { computeFileHash } from '@/utils/image/compressors/hash';
+import { validateImage } from '@/utils/image/compressors/validation';
+import { compressImage } from '@/utils/image/compressors/compress';
+import { generateImagesZip } from '@/utils/image/compressors/zipGenerator';
 import { SUPPORTED_MIME_TYPES } from '@/const/image-extensions';
 import {
     MAX_IMAGES_PER_UPLOAD,

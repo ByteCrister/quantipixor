@@ -34,7 +34,7 @@ const DEFAULT_CONFIG: CompressionConfig = {
 
 const FILE_ACCEPT = "image/png,image/jpeg,image/webp,image/jpg";
 
-/** JSON body shape returned by `/api/generate-favicons` on error. */
+/** JSON body shape returned by `/api/v1/generate-favicon` on error. */
 type GenerateFaviconsErrorJson = {
   error?: string;
 };
@@ -117,7 +117,7 @@ export default function FaviconGeneratorPage() {
       const formData = new FormData();
       formData.append("image", croppedBlob, "cropped.png");
 
-      const response = await fetch("/api/generate-favicons", {
+      const response = await fetch("/api/v1/generate-favicon", {
         method: "POST",
         body: formData,
       });

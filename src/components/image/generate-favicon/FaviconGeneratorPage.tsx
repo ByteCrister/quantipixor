@@ -179,15 +179,16 @@ export default function FaviconGeneratorPage() {
   const canGenerate = Boolean(originalFile && croppedAreaPixels && !isGenerating);
 
   return (
-    <div className="relative mx-auto max-w-4xl px-4 py-8 md:px-6 md:py-12">
+    <section className="relative w-full overflow-x-clip">
       <div
-        className="pointer-events-none absolute -left-24 top-0 h-72 w-72 rounded-full bg-[#1856FF]/10 blur-3xl"
+        className="pointer-events-none absolute left-0 top-0 h-72 w-72 -translate-x-1/3 rounded-full bg-[#1856FF]/10 blur-3xl"
         aria-hidden
       />
       <div
-        className="pointer-events-none absolute -right-16 top-32 h-56 w-56 rounded-full bg-[#3A344E]/15 blur-3xl"
+        className="pointer-events-none absolute right-0 top-32 h-56 w-56 translate-x-1/4 rounded-full bg-[#3A344E]/15 blur-3xl"
         aria-hidden
       />
+      <div className="relative mx-auto max-w-4xl px-4 py-8 md:px-6 md:py-12">
 
       <motion.div
         initial={{ opacity: 0, y: 8 }}
@@ -364,6 +365,7 @@ export default function FaviconGeneratorPage() {
           Square crop keeps icons sharp at every size.
         </p>
       </div>
-    </div>
+      </div>
+    </section>
   );
 }

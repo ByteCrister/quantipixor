@@ -6,6 +6,7 @@ import {
     ImageItem,
     CompressionConfig,
     UploadStats,
+    CroppedImagePayload,
 } from '@/types';
 import { computeFileHash } from '@/utils/image/compressors/hash';
 import { validateImage } from '@/utils/image/compressors/validation';
@@ -120,6 +121,25 @@ export const useImageCompressorStore = create<ImageCompressorStore>(
                     images: state.images.filter((img) => img.id !== id),
                 };
             });
+        },
+
+        replaceImageWithCrop: (id: string, payload: CroppedImagePayload) => {
+            set((state) => ({
+                images: state.images.map((img) => {
+                    if (img.id !== id) return img;
+                    if (img.previewUrl) URL.revokeObjectURL(img.previewUrl);
+                    return {
+                        ...img,
+                        file: payload.file,
+                        previewUrl: payload.previewUrl,
+                        size: payload.size,
+                        mimeType: payload.mimeType,
+                        status: 'pending',
+                        compressedBlob: undefined,
+                        error: undefined,
+                    };
+                }),
+            }));
         },
 
         restoreImageAt: (item: ImageItem, index: number) => {

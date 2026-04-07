@@ -17,6 +17,7 @@ import {
   ImageIcon,
   Loader2,
   RefreshCw,
+  Scissors,
   Sparkles,
 } from "lucide-react";
 
@@ -30,6 +31,18 @@ import { Badge } from "@/components/ui/badge";
 import { Toaster } from "@/components/ui/toaster";
 import { toast } from "@/store/toastStore";
 import { cn } from "@/lib/utils";
+import type { CropSettings } from "@/types";
+import cropImageFromPreview from "@/components/image/batch-compressor/cropImageFromPreview";
+import CropControls from "@/components/image/batch-compressor/CropControls";
+import CropOverlay from "@/components/image/batch-compressor/CropOverlay";
+import { withExtension } from "@/components/image/batch-compressor/loadImage";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 // ---------------------------------------------------------------------------
 // Output types: JPEG/PNG/WebP/AVIF via canvas.toBlob; BMP via software encoder
@@ -276,7 +289,15 @@ export default function ImageConverterPage() {
 
   const [includePrefix, setIncludePrefix] = useState(true);
   const [isConverting, setIsConverting] = useState(false);
+  const [isCropping, setIsCropping] = useState(false);
+  const [cropDialogOpen, setCropDialogOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [crop, setCrop] = useState<CropSettings>({
+    zoom: 1,
+    offsetX: 0,
+    offsetY: 0,
+    frameSize: 72,
+  });
 
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -327,7 +348,11 @@ export default function ImageConverterPage() {
     };
   }, []);
 
-  const processFile = useCallback((selectedFile: File) => {
+  useEffect(() => {
+    setCrop({ zoom: 1, offsetX: 0, offsetY: 0, frameSize: 72 });
+  }, [file?.name]);
+
+  const processFile = useCallback((selectedFile: File, options?: { silentLoadedToast?: boolean }) => {
     const effectiveMime = getEffectiveImageMime(selectedFile);
     const normalizedBase = effectiveMime?.split(";")[0]?.trim().toLowerCase() ?? "";
     const allowed =
@@ -380,11 +405,13 @@ export default function ImageConverterPage() {
       setSourceDataUrl(dataUrl);
     });
 
-    toast({
-      variant: "success",
-      title: "Image loaded",
-      message: `${selectedFile.name} · ${formatBytes(selectedFile.size)} — source Base64 is shown below.`,
-    });
+    if (!options?.silentLoadedToast) {
+      toast({
+        variant: "success",
+        title: "Image loaded",
+        message: `${selectedFile.name} · ${formatBytes(selectedFile.size)} — source Base64 is shown below.`,
+      });
+    }
   }, []);
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -468,6 +495,45 @@ export default function ImageConverterPage() {
       });
     } finally {
       setIsConverting(false);
+    }
+  };
+
+  const handleApplyCrop = async () => {
+    if (!file || !originalPreviewUrl || isCropping) return;
+    const previousFile = file;
+    try {
+      setIsCropping(true);
+      const blob = await cropImageFromPreview(originalPreviewUrl, file.name, crop);
+      const ext = blob.type === "image/png" ? "png" : "jpg";
+      const croppedFile = new File([blob], withExtension(file.name, ext), {
+        type: blob.type,
+      });
+      processFile(croppedFile, { silentLoadedToast: true });
+      setCropDialogOpen(false);
+      toast({
+        variant: "success",
+        title: "Crop applied",
+        message: "Image updated for conversion.",
+        action: {
+          label: "Undo",
+          onClick: () => {
+            processFile(previousFile, { silentLoadedToast: true });
+            toast({
+              variant: "info",
+              title: "Crop reverted",
+              message: "Restored the previous image.",
+            });
+          },
+        },
+      });
+    } catch {
+      toast({
+        variant: "error",
+        title: "Crop failed",
+        message: "Could not crop this image. Try again.",
+      });
+    } finally {
+      setIsCropping(false);
     }
   };
 
@@ -573,15 +639,64 @@ export default function ImageConverterPage() {
   return (
     <>
       <Toaster />
-      <div className="relative mx-auto max-w-5xl px-4 py-8 md:px-6 md:py-12">
+      <Dialog open={cropDialogOpen} onOpenChange={setCropDialogOpen}>
+        <DialogContent className="max-h-[92vh] max-w-5xl overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="pr-8">{file?.name ?? "Crop image"}</DialogTitle>
+            <DialogDescription>
+              Adjust crop area before converting.
+            </DialogDescription>
+          </DialogHeader>
+          {originalPreviewUrl ? (
+            <div className="grid gap-4 lg:grid-cols-[1fr_280px]">
+              <div className="relative mx-auto aspect-square w-full max-w-2xl overflow-hidden rounded-2xl border border-black/10 bg-black/5 dark:border-white/10 dark:bg-white/5">
+                {/* eslint-disable-next-line @next/next/no-img-element -- blob preview */}
+                <img
+                  src={originalPreviewUrl}
+                  alt=""
+                  className="h-full w-full object-contain"
+                  style={{
+                    transform: `translate(${crop.offsetX}%, ${crop.offsetY}%) scale(${crop.zoom})`,
+                  }}
+                />
+                <CropOverlay crop={crop} />
+              </div>
+              <div className="space-y-3 rounded-2xl border border-black/8 bg-black/2 p-3 dark:border-white/10 dark:bg-white/3">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => void handleApplyCrop()}
+                  disabled={isCropping}
+                  className="w-full justify-start"
+                >
+                  {isCropping ? (
+                    <>
+                      <Loader2 className="size-4 animate-spin" />
+                      Applying crop…
+                    </>
+                  ) : (
+                    <>
+                      <Scissors className="size-4" />
+                      Apply crop
+                    </>
+                  )}
+                </Button>
+                <CropControls crop={crop} setCrop={setCrop} />
+              </div>
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
+      <section className="relative w-full overflow-x-clip">
         <div
-          className="pointer-events-none absolute -left-24 top-0 h-72 w-72 rounded-full bg-[#1856FF]/10 blur-3xl"
+          className="pointer-events-none absolute left-0 top-0 h-72 w-72 -translate-x-1/3 rounded-full bg-[#1856FF]/10 blur-3xl"
           aria-hidden
         />
         <div
-          className="pointer-events-none absolute -right-16 top-32 h-56 w-56 rounded-full bg-[#3A344E]/15 blur-3xl"
+          className="pointer-events-none absolute right-0 top-32 h-56 w-56 translate-x-1/4 rounded-full bg-[#3A344E]/15 blur-3xl"
           aria-hidden
         />
+        <div className="relative mx-auto max-w-5xl px-4 py-8 md:px-6 md:py-12">
 
         <motion.div
           initial={{ opacity: 0, y: 8 }}
@@ -706,6 +821,17 @@ export default function ImageConverterPage() {
                       alt=""
                       className="max-h-64 max-w-full object-contain"
                     />
+                  </div>
+                  <div className="mt-3 flex justify-end">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCropDialogOpen(true)}
+                    >
+                      <Scissors className="size-4" aria-hidden />
+                      Crop image
+                    </Button>
                   </div>
                   <dl className="mt-4 space-y-1 text-sm text-[#141414]/75 dark:text-white/70">
                     <div className="flex justify-between gap-2">
@@ -901,7 +1027,8 @@ export default function ImageConverterPage() {
           </code>{" "}
           (common in Chromium).
         </p>
-      </div>
+        </div>
+      </section>
     </>
   );
 }

@@ -14,6 +14,20 @@ export interface ImageItem {
     mimeType: string;
 }
 
+export interface CroppedImagePayload {
+    file: File;
+    previewUrl: string;
+    size: number;
+    mimeType: string;
+}
+
+export type CropSettings = {
+    zoom: number;
+    offsetX: number;
+    offsetY: number;
+    frameSize: number;
+  };
+
 export interface CompressionConfig {
     baseName: string;
     batchSize: number;
@@ -48,6 +62,7 @@ export interface ImageCompressorState {
 export interface ImageCompressorActions {
     addFiles: (files: File[]) => Promise<UploadStats>;
     removeImage: (id: string) => void;
+    replaceImageWithCrop: (id: string, payload: CroppedImagePayload) => void;
     /** Re-insert a removed image (new object URL). Clamps index to current list length. */
     restoreImageAt: (item: ImageItem, index: number) => void;
     clearAll: () => void;

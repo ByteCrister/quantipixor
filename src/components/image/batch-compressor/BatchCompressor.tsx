@@ -11,6 +11,7 @@ import {
   HardDrive,
   Images,
   Loader2,
+  Eye,
   RotateCcw,
   Sparkles,
   Trash2,
@@ -47,6 +48,8 @@ import {
 } from "./BatchActionConfirmDialog";
 import { cn } from "@/lib/utils";
 import type { ImageItem } from "@/types";
+import ImagePreviewDialog from "./ImagePreviewDialog";
+import { Field, IndeterminateBar, inputClass, ProgressBar, StatCard } from "./loadImage";
 
 export default function BatchCompressor() {
   const images = useImages();
@@ -62,6 +65,7 @@ export default function BatchCompressor() {
   const [pendingConfirm, setPendingConfirm] = useState<BatchConfirmAction | null>(
     null,
   );
+  const [previewImageId, setPreviewImageId] = useState<string | null>(null);
 
   const {
     addFiles,
@@ -74,7 +78,13 @@ export default function BatchCompressor() {
     resetForRecompress,
     removeImage,
     restoreImageAt,
+    replaceImageWithCrop,
   } = useImageCompressorStore();
+  const selectedImage = useMemo(
+    () => images.find((item) => item.id === previewImageId) ?? null,
+    [images, previewImageId],
+  );
+
 
   const queueIsFull = images.length >= MAX_TOTAL_IMAGES;
   const slotsRemaining = Math.max(0, MAX_TOTAL_IMAGES - images.length);
@@ -262,15 +272,54 @@ export default function BatchCompressor() {
         imageCount={images.length}
         onConfirm={handleConfirmAction}
       />
-      <div className="relative mx-auto max-w-6xl px-4 py-8 md:px-6 md:py-12">
+      <ImagePreviewDialog
+        image={selectedImage}
+        open={Boolean(selectedImage)}
+        onOpenChange={(open) => {
+          if (!open) setPreviewImageId(null);
+        }}
+        onApplyCrop={(payload) => {
+          if (!selectedImage) return;
+          const previousImage = {
+            file: selectedImage.file,
+            size: selectedImage.size,
+            mimeType: selectedImage.mimeType,
+          };
+          replaceImageWithCrop(selectedImage.id, payload);
+          toast({
+            variant: "success",
+            title: "Crop applied",
+            message: `"${selectedImage.originalName}" updated and ready to compress.`,
+            action: {
+              label: "Undo",
+              onClick: () => {
+                const restoredPreviewUrl = URL.createObjectURL(previousImage.file);
+                replaceImageWithCrop(selectedImage.id, {
+                  file: previousImage.file,
+                  previewUrl: restoredPreviewUrl,
+                  size: previousImage.size,
+                  mimeType: previousImage.mimeType,
+                });
+                toast({
+                  variant: "info",
+                  title: "Crop reverted",
+                  message: `"${selectedImage.originalName}" restored to the previous version.`,
+                });
+              },
+            },
+          });
+        }}
+      />
+      <section className="relative w-full overflow-x-clip">
         <div
-          className="pointer-events-none absolute -left-24 top-0 h-72 w-72 rounded-full bg-[#1856FF]/10 blur-3xl"
+          className="pointer-events-none absolute left-0 top-0 h-72 w-72 -translate-x-1/3 rounded-full bg-[#1856FF]/10 blur-3xl"
           aria-hidden
         />
         <div
-          className="pointer-events-none absolute -right-16 top-32 h-56 w-56 rounded-full bg-[#3A344E]/15 blur-3xl"
+          className="pointer-events-none absolute right-0 top-32 h-56 w-56 translate-x-1/4 rounded-full bg-[#3A344E]/15 blur-3xl"
           aria-hidden
         />
+        <div className="relative mx-auto max-w-6xl px-4 py-8 md:px-6 md:py-12">
 
         {/* Header */}
         <div className="relative mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -433,64 +482,64 @@ export default function BatchCompressor() {
 
         {/* Drop zone */}
         <div
-                    onDragOver={queueIsFull ? undefined : handleDragOver}
-                    onDragLeave={queueIsFull ? undefined : handleDragLeave}
-                    onDrop={handleDrop}
-                    className={cn(
-                        "relative mb-6 rounded-3xl border-2 border-dashed p-10 text-center transition-all",
-                        queueIsFull && "opacity-75",
-                        isDragging && !queueIsFull
-                            ? "border-[#1856FF] bg-[#1856FF]/8 shadow-[0_0_0_4px_rgba(24,86,255,0.12)]"
-                            : "border-[#3A344E]/20 bg-[color-mix(in_srgb,var(--surface)_85%,transparent)] backdrop-blur-md dark:border-white/10",
-                    )}
-                >
-                    <input
-                        type="file"
-                        multiple
-                        accept={FILE_INPUT_ACCEPT}
-                        onChange={handleFileUpload}
-                        className="sr-only"
-                        id="file-upload"
-                        disabled={queueIsFull}
-                    />
+          onDragOver={queueIsFull ? undefined : handleDragOver}
+          onDragLeave={queueIsFull ? undefined : handleDragLeave}
+          onDrop={handleDrop}
+          className={cn(
+            "relative mb-6 rounded-3xl border-2 border-dashed p-10 text-center transition-all",
+            queueIsFull && "opacity-75",
+            isDragging && !queueIsFull
+              ? "border-[#1856FF] bg-[#1856FF]/8 shadow-[0_0_0_4px_rgba(24,86,255,0.12)]"
+              : "border-[#3A344E]/20 bg-[color-mix(in_srgb,var(--surface)_85%,transparent)] backdrop-blur-md dark:border-white/10",
+          )}
+        >
+          <input
+            type="file"
+            multiple
+            accept={FILE_INPUT_ACCEPT}
+            onChange={handleFileUpload}
+            className="sr-only"
+            id="file-upload"
+            disabled={queueIsFull}
+          />
           <CloudUpload
             className="mx-auto size-12 text-[#1856FF] opacity-90"
             strokeWidth={1.25}
             aria-hidden
           />
-                    <label
-                        htmlFor="file-upload"
-                        className={cn(
-                            "mt-4 block",
-                            queueIsFull ? "cursor-not-allowed" : "cursor-pointer",
-                        )}
-                    >
-                        <span
-                            className={cn(
-                                "inline-flex items-center justify-center rounded-full px-6 py-2.5 text-sm font-semibold shadow-[0_10px_28px_-6px_rgba(24,86,255,0.55)] ring-1 ring-white/20 transition dark:ring-white/10",
-                                queueIsFull
-                                    ? "bg-[#3A344E]/40 text-white/70 ring-white/10"
-                                    : "bg-[#1856FF] text-white hover:bg-[#0E4ADB]",
-                            )}
-                        >
-                            {queueIsFull ? "Queue full" : "Select images"}
-                        </span>
-                    </label>
-                    <p className="mt-3 text-sm text-[#141414]/65 dark:text-white/55">
-                        {queueIsFull ? (
-                            <>
-                                Maximum {MAX_TOTAL_IMAGES} images — use{" "}
-                                <strong className="text-[#1856FF]">Reset</strong> to re-run the same
-                                set, or <strong className="text-[#EA2143]">Clear all</strong> to free slots.
-                            </>
-                        ) : (
-                            <>
-                                Up to {MAX_IMAGES_PER_UPLOAD} per add · {slotsRemaining} slot
-                                {slotsRemaining !== 1 ? "s" : ""} left · {SUPPORTED_EXTENSIONS_LABEL_SHORT}
-                            </>
-                        )}
-                    </p>
-                </div>
+          <label
+            htmlFor="file-upload"
+            className={cn(
+              "mt-4 block",
+              queueIsFull ? "cursor-not-allowed" : "cursor-pointer",
+            )}
+          >
+            <span
+              className={cn(
+                "inline-flex items-center justify-center rounded-full px-6 py-2.5 text-sm font-semibold shadow-[0_10px_28px_-6px_rgba(24,86,255,0.55)] ring-1 ring-white/20 transition dark:ring-white/10",
+                queueIsFull
+                  ? "bg-[#3A344E]/40 text-white/70 ring-white/10"
+                  : "bg-[#1856FF] text-white hover:bg-[#0E4ADB]",
+              )}
+            >
+              {queueIsFull ? "Queue full" : "Select images"}
+            </span>
+          </label>
+          <p className="mt-3 text-sm text-[#141414]/65 dark:text-white/55">
+            {queueIsFull ? (
+              <>
+                Maximum {MAX_TOTAL_IMAGES} images — use{" "}
+                <strong className="text-[#1856FF]">Reset</strong> to re-run the same
+                set, or <strong className="text-[#EA2143]">Clear all</strong> to free slots.
+              </>
+            ) : (
+              <>
+                Up to {MAX_IMAGES_PER_UPLOAD} per add · {slotsRemaining} slot
+                {slotsRemaining !== 1 ? "s" : ""} left · {SUPPORTED_EXTENSIONS_LABEL_SHORT}
+              </>
+            )}
+          </p>
+        </div>
 
         {uploadStats && (
           <div className="mb-6 flex flex-wrap items-center gap-3 rounded-2xl border border-[#1856FF]/20 bg-[#1856FF]/6 px-4 py-3 text-sm dark:border-[#1856FF]/25">
@@ -617,6 +666,18 @@ export default function BatchCompressor() {
                     >
                       <Trash2 className="size-4" aria-hidden />
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => setPreviewImageId(image.id)}
+                      className={cn(
+                        "absolute bottom-2 right-2 flex size-9 items-center justify-center rounded-full border border-white/25 bg-[#141414]/55 text-white shadow-md backdrop-blur-sm transition",
+                        "hover:bg-[#1856FF]/85 hover:border-white/40",
+                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80",
+                      )}
+                      aria-label={`Preview ${image.originalName}`}
+                    >
+                      <Eye className="size-4" aria-hidden />
+                    </button>
                   </div>
                 )}
                 <p className="truncate font-mono text-[10px] text-[#3A344E] dark:text-white/50">
@@ -659,100 +720,8 @@ export default function BatchCompressor() {
             No images yet — upload to see stats and progress.
           </p>
         )}
-      </div>
+        </div>
+      </section>
     </>
-  );
-}
-
-const inputClass = cn(
-  "w-full rounded-xl border border-black/[0.08] bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] px-3 py-2 text-sm text-[#141414] outline-none transition",
-  "focus:border-[#1856FF]/50 focus:ring-2 focus:ring-[#1856FF]/25",
-  "dark:border-white/10 dark:bg-white/[0.04] dark:text-white",
-);
-
-function Field({
-  label,
-  hint,
-  children,
-}: {
-  label: string;
-  hint: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div>
-      <label className="block text-sm font-semibold text-[#141414] dark:text-white">{label}</label>
-      <p className="mb-2 text-xs text-[#141414]/55 dark:text-white/45">{hint}</p>
-      {children}
-    </div>
-  );
-}
-
-function StatCard({
-  icon: Icon,
-  label,
-  value,
-  hint,
-  accent,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  value: string;
-  hint: string;
-  accent?: "success";
-}) {
-  return (
-    <Card
-      className={cn(
-        "border-black/6 dark:border-white/10",
-        accent === "success" && "border-[#07CA6B]/25 ring-1 ring-[#07CA6B]/10",
-      )}
-    >
-      <CardContent className="flex gap-4 p-5">
-        <div
-          className={cn(
-            "flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#1856FF]/10 text-[#1856FF]",
-            accent === "success" && "bg-[#07CA6B]/12 text-[#07CA6B]",
-          )}
-        >
-          <Icon className="size-6" aria-hidden />
-        </div>
-        <div className="min-w-0">
-          <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-[#3A344E]/70 dark:text-white/45">
-            {label}
-          </p>
-          <p className="mt-1 truncate text-xl font-bold text-[#141414] dark:text-white">{value}</p>
-          <p className="mt-0.5 text-xs text-[#141414]/55 dark:text-white/45">{hint}</p>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function ProgressBar({ value, tone }: { value: number; tone: "primary" }) {
-  return (
-    <div className="h-2.5 w-full overflow-hidden rounded-full bg-[#3A344E]/10 dark:bg-white/10">
-      <motion.div
-        className={cn(
-          "h-full rounded-full",
-          tone === "primary" && "bg-[#1856FF]",
-        )}
-        initial={{ width: 0 }}
-        animate={{ width: `${value}%` }}
-        transition={{ type: "spring", stiffness: 300, damping: 30 }}
-      />
-    </div>
-  );
-}
-
-function IndeterminateBar() {
-  return (
-    <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-[#3A344E]/10 dark:bg-white/10">
-      <motion.div
-        className="absolute left-0 top-0 h-full w-2/5 rounded-full bg-[#E89558]"
-        animate={{ x: ["-100%", "280%"] }}
-        transition={{ duration: 1.15, repeat: Infinity, ease: "linear" }}
-      />
-    </div>
   );
 }

@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+
+process.env.ORT_NODE_BACKEND = "wasm";
+
+
 import { pipeline, env } from "@huggingface/transformers";
 import sharp from "sharp";
+
+export const runtime = "nodejs";
 
 // Configure transformers.js for Node.js environment
 env.useBrowserCache = false;

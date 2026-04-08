@@ -1,18 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-
-process.env.ORT_NODE_BACKEND = "wasm";
-
-
-import { pipeline, env } from "@huggingface/transformers";
 import sharp from "sharp";
 
 export const runtime = "nodejs";
 
-// Configure transformers.js for Node.js environment
-env.useBrowserCache = false;
-env.allowLocalModels = true;
-// Optional: set a writable cache directory (adjust as needed)
-env.cacheDir = "/tmp/transformers_cache";
+// ============================================================================
+// Constants & helpers (no changes from original)
+// ============================================================================
 
 const ALLOWED_MIME_TYPES = new Set([
   "image/jpeg",
@@ -51,22 +44,6 @@ type RawMaskLike = {
 let cachedSegmenter: Segmenter | null = null;
 let loadingSegmenter: Promise<Segmenter> | null = null;
 
-async function getSegmenter(): Promise<Segmenter> {
-  if (cachedSegmenter) return cachedSegmenter;
-  if (loadingSegmenter) return loadingSegmenter;
-
-  loadingSegmenter = pipeline("image-segmentation", "Xenova/modnet")
-    .then((instance) => {
-      cachedSegmenter = instance as unknown as Segmenter;
-      return cachedSegmenter;
-    })
-    .finally(() => {
-      loadingSegmenter = null;
-    });
-
-  return loadingSegmenter;
-}
-
 function badRequest(message: string, status = 400) {
   return NextResponse.json({ error: message }, { status });
 }
@@ -91,6 +68,53 @@ function hasRawMaskData(mask: unknown): mask is RawMaskLike {
   );
 }
 
+// ============================================================================
+// Lazy loader for the segmentation pipeline (fixes build OOM + runtime WASM)
+// ============================================================================
+
+async function getSegmenter(): Promise<Segmenter> {
+  if (cachedSegmenter) return cachedSegmenter;
+  if (loadingSegmenter) return loadingSegmenter;
+
+  loadingSegmenter = (async () => {
+    // Force WASM backend BEFORE importing transformers (prevents native binding)
+    process.env.ORT_NODE_BACKEND = "wasm";
+
+    // Dynamically import the heavy module only when needed
+    const { pipeline, env } = await import("@huggingface/transformers");
+
+    // Configure transformers.js environment
+    env.useBrowserCache = false;
+    env.allowLocalModels = true;
+    env.cacheDir = "/tmp/transformers_cache";
+
+    // Provide explicit WASM file paths (required for Vercel serverless)
+    env.backends = {
+      onnx: {
+        wasm: {
+          wasmPaths: {
+            wasm: "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.14.0/dist/ort-wasm-simd-threaded.wasm",
+            mjs: "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.14.0/dist/ort-wasm-simd-threaded.mjs",
+          },
+          numThreads: 1, // keep low for serverless environments
+        },
+      },
+    };
+
+    const instance = await pipeline("image-segmentation", "Xenova/modnet");
+    cachedSegmenter = instance as unknown as Segmenter;
+    return cachedSegmenter;
+  })();
+
+  const segmenter = await loadingSegmenter;
+  loadingSegmenter = null;
+  return segmenter;
+}
+
+// ============================================================================
+// POST handler (unchanged except for the lazy segmenter)
+// ============================================================================
+
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
@@ -99,10 +123,14 @@ export async function POST(request: NextRequest) {
       return badRequest("No image provided");
     }
     if (!ALLOWED_MIME_TYPES.has(image.type)) {
-      return badRequest("Unsupported image type. Use JPEG, PNG, WebP, GIF, BMP, TIFF, or AVIF.");
+      return badRequest(
+        "Unsupported image type. Use JPEG, PNG, WebP, GIF, BMP, TIFF, or AVIF."
+      );
     }
     if (image.size <= 0 || image.size > MAX_FILE_BYTES) {
-      return badRequest(`Image size must be between 1 byte and ${MAX_FILE_MB} MB.`);
+      return badRequest(
+        `Image size must be between 1 byte and ${MAX_FILE_MB} MB.`
+      );
     }
 
     const originalBuffer = Buffer.from(await image.arrayBuffer());
@@ -146,7 +174,10 @@ export async function POST(request: NextRequest) {
     } else if (hasRawMaskData(maskImage)) {
       const channels = maskImage.channels === 4 ? 4 : 1;
       const total = maskImage.width * maskImage.height * channels;
-      const raw = Uint8Array.from(maskImage.data as ArrayLike<number>).slice(0, total);
+      const raw = Uint8Array.from(maskImage.data as ArrayLike<number>).slice(
+        0,
+        total
+      );
       maskBuffer = await sharp(Buffer.from(raw), {
         raw: { width: maskImage.width, height: maskImage.height, channels },
       })
@@ -155,13 +186,17 @@ export async function POST(request: NextRequest) {
     } else {
       return badRequest("Unsupported mask format from segmentation model.", 500);
     }
+
     const maskRaw = await sharp(maskBuffer)
       .resize(width, height)
       .ensureAlpha()
       .raw()
       .toBuffer();
 
-    const originalRaw = await sharp(originalBuffer).ensureAlpha().raw().toBuffer();
+    const originalRaw = await sharp(originalBuffer)
+      .ensureAlpha()
+      .raw()
+      .toBuffer();
     const rgba = Buffer.alloc(originalRaw.length);
     for (let i = 0; i < width * height; i++) {
       const p = i * 4;
@@ -186,7 +221,11 @@ export async function POST(request: NextRequest) {
       outputMime = "image/jpeg";
     } else if (outputFormat === "webp") {
       finalImage = await processor
-        .webp({ quality: OUTPUT_QUALITY, alphaQuality: OUTPUT_QUALITY, effort: 4 })
+        .webp({
+          quality: OUTPUT_QUALITY,
+          alphaQuality: OUTPUT_QUALITY,
+          effort: 4,
+        })
         .toBuffer();
       outputMime = "image/webp";
     } else {
@@ -201,7 +240,7 @@ export async function POST(request: NextRequest) {
     console.error("v1 remove-bg failed:", error);
     return NextResponse.json(
       { error: "Background removal failed. Try again with a smaller image." },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

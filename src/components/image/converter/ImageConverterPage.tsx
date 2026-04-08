@@ -32,9 +32,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { toast } from "@/store/toastStore";
 import { cn } from "@/lib/utils";
 import type { CropSettings } from "@/types";
-import cropImageFromPreview from "@/components/image/batch-compressor/cropImageFromPreview";
-import CropControls from "@/components/image/batch-compressor/CropControls";
-import CropOverlay from "@/components/image/batch-compressor/CropOverlay";
+import cropImageFromPreview from "@/components/global/image-cropper/cropImageFromPreview";
+import CropImage from "@/components/global/image-cropper/CropImage";
 import { withExtension } from "@/components/image/batch-compressor/loadImage";
 import {
   Dialog,
@@ -649,17 +648,13 @@ export default function ImageConverterPage() {
           </DialogHeader>
           {originalPreviewUrl ? (
             <div className="grid gap-4 lg:grid-cols-[1fr_280px]">
-              <div className="relative mx-auto aspect-square w-full max-w-2xl overflow-hidden rounded-2xl border border-black/10 bg-black/5 dark:border-white/10 dark:bg-white/5">
-                {/* eslint-disable-next-line @next/next/no-img-element -- blob preview */}
-                <img
-                  src={originalPreviewUrl}
-                  alt=""
-                  className="h-full w-full object-contain"
-                  style={{
-                    transform: `translate(${crop.offsetX}%, ${crop.offsetY}%) scale(${crop.zoom})`,
-                  }}
+              <div>
+                <CropImage
+                  imageUrl={originalPreviewUrl}
+                  imageAlt={file?.name ?? "Crop preview"}
+                  crop={crop}
+                  onCropChange={setCrop}
                 />
-                <CropOverlay crop={crop} />
               </div>
               <div className="space-y-3 rounded-2xl border border-black/8 bg-black/2 p-3 dark:border-white/10 dark:bg-white/3">
                 <Button
@@ -681,7 +676,9 @@ export default function ImageConverterPage() {
                     </>
                   )}
                 </Button>
-                <CropControls crop={crop} setCrop={setCrop} />
+                <p className="text-xs text-[#141414]/60 dark:text-white/60">
+                  Pinch on mobile or Ctrl + wheel on desktop for precise zoom.
+                </p>
               </div>
             </div>
           ) : null}

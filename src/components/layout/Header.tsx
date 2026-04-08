@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ImageIcon, Repeat, Eraser, Menu, X } from "lucide-react";
+import { ImageIcon, Repeat, Eraser, Menu, X, FileText } from "lucide-react";
 import QuantipixorIcon from "@/components/global/QuantipixorIcon";
 import { cn } from "@/lib/utils";
 
@@ -52,6 +52,11 @@ const Header: React.FC = () => {
 
   const handleRemoveBgClick = () => {
     router.push("/image/remove-bg");
+    setMobileMenuOpen(false);
+  };
+
+  const handleOcrDocFormatterClick = () => {
+    router.push("/image/ocr-doc-formatter");
     setMobileMenuOpen(false);
   };
 
@@ -176,6 +181,17 @@ const Header: React.FC = () => {
                 <span>Remove BG</span>
               </button>
 
+              {/* OCR / Doc Formatter Button */}
+              <button
+                type="button"
+                onClick={handleOcrDocFormatterClick}
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-black/20 bg-transparent px-3 py-2 text-sm font-medium text-foreground/80 transition-all hover:border-[#1856FF]/60 hover:bg-[#1856FF]/5 hover:text-[#1856FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1856FF]/40 focus-visible:ring-offset-2 dark:border-white/20 dark:text-white/70 dark:hover:border-white/40 dark:hover:bg-white/5 dark:hover:text-white dark:focus-visible:ring-offset-[#0c0b10]"
+                aria-label="OCR document formatter"
+              >
+                <FileText className="h-4 w-4" />
+                <span>OCR Formatter</span>
+              </button>
+
               <button
                 type="button"
                 onClick={handleBatchCompressorClick}
@@ -276,6 +292,12 @@ const Header: React.FC = () => {
               <span className="flex items-center gap-3">
                 <Eraser className="h-4 w-4" />
                 Remove BG
+              </span>
+            </button>
+            <button onClick={handleOcrDocFormatterClick} className={mobileNavItem}>
+              <span className="flex items-center gap-3">
+                <FileText className="h-4 w-4" />
+                OCR Formatter
               </span>
             </button>
           </nav>

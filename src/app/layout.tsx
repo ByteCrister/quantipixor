@@ -1,5 +1,10 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { env } from "@huggingface/transformers";
+
+env.useBrowserCache = true;
+env.allowLocalModels = false;
+
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { Toaster } from "@/components/ui/toaster";

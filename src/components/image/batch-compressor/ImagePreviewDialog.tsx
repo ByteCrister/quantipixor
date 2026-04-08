@@ -2,7 +2,7 @@
 
 import { CropSettings, ImageItem } from "@/types";
 import { useEffect, useState } from "react";
-import cropImageFromPreview from "./cropImageFromPreview";
+import cropImageFromPreview from "../../global/image-cropper/cropImageFromPreview";
 import {
     Dialog,
     DialogContent,
@@ -13,11 +13,9 @@ import {
 import { withExtension } from "./loadImage";
 import { toast } from "@/store/toastStore";
 import BeforeAfterViewer from "./BeforeAfterViewer";
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Eye, Loader2, Scissors, ZoomIn } from "lucide-react";
-import CropOverlay from "./CropOverlay";
-import CropControls from "./CropControls";
+import CropImage from "@/components/global/image-cropper/CropImage";
 
 export default function ImagePreviewDialog({
     image,
@@ -119,35 +117,28 @@ export default function ImagePreviewDialog({
           {!activeUrl ? null : (
             <div className="grid gap-4 lg:grid-cols-[1fr_280px]">
               <div className="space-y-3">
-                <div className="relative mx-auto aspect-square w-full max-w-2xl overflow-hidden rounded-2xl border border-black/10 bg-black/5 dark:border-white/10 dark:bg-white/5">
-                  {showCompare && canCompare ? (
-                   <BeforeAfterViewer
-                   beforeUrl={activeUrl}
-                   afterUrl={compressedUrl}
-                   split={compareSplit}
-                   zoom={previewZoom}
-                   origin={compareOrigin}
-                   enableWheelZoom={isDesktopPointer}
-                   onZoomChange={setPreviewZoom}
-                   onOriginChange={setCompareOrigin}
-                   onSplitChange={setCompareSplit}
-                 />
-                  ) : (
-                    <>
-                      <Image
-                        src={activeUrl}
-                        alt={image?.originalName ?? "Image preview"}
-                        fill
-                        className="object-contain"
-                        style={{
-                          transform: `translate(${crop.offsetX}%, ${crop.offsetY}%) scale(${crop.zoom * previewZoom})`,
-                        }}
-                        unoptimized
-                      />
-                      <CropOverlay crop={crop} />
-                    </>
-                  )}
-                </div>
+                {showCompare && canCompare ? (
+                  <div className="relative mx-auto aspect-square w-full max-w-2xl overflow-hidden rounded-2xl border border-black/10 bg-black/5 dark:border-white/10 dark:bg-white/5">
+                    <BeforeAfterViewer
+                      beforeUrl={activeUrl}
+                      afterUrl={compressedUrl}
+                      split={compareSplit}
+                      zoom={previewZoom}
+                      origin={compareOrigin}
+                      enableWheelZoom={isDesktopPointer}
+                      onZoomChange={setPreviewZoom}
+                      onOriginChange={setCompareOrigin}
+                      onSplitChange={setCompareSplit}
+                    />
+                  </div>
+                ) : (
+                  <CropImage
+                    imageUrl={activeUrl}
+                    imageAlt={image?.originalName ?? "Image preview"}
+                    crop={crop}
+                    onCropChange={setCrop}
+                  />
+                )}
               </div>
   
               <div className="space-y-3 rounded-2xl border border-black/8 bg-black/2 p-3 dark:border-white/10 dark:bg-white/3">
@@ -204,7 +195,11 @@ export default function ImagePreviewDialog({
                   )}
                 </div>
   
-                <CropControls crop={crop} setCrop={setCrop} />
+                {!showCompare && (
+                  <p className="text-xs text-[#141414]/60 dark:text-white/60">
+                    Tip: hold Ctrl + wheel to zoom quickly, then drag to position the image.
+                  </p>
+                )}
               </div>
             </div>
           )}

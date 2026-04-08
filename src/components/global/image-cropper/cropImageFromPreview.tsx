@@ -1,7 +1,7 @@
 "use client";
 
 import { CropSettings } from "@/types";
-import loadImage, { pickCanvasMimeFromName } from "./loadImage";
+import loadImage, { pickCanvasMimeFromName } from "../../image/batch-compressor/loadImage";
 
 export default async function cropImageFromPreview(
     previewUrl: string,
@@ -17,8 +17,9 @@ export default async function cropImageFromPreview(
     const frameTop = (containerSize - frameSize) / 2;
   
     const imageRatio = img.naturalWidth / img.naturalHeight;
-    const baseRenderWidth = imageRatio >= 1 ? containerSize * imageRatio : containerSize;
-    const baseRenderHeight = imageRatio >= 1 ? containerSize : containerSize / imageRatio;
+    // Mirror object-contain inside a square container.
+    const baseRenderWidth = imageRatio >= 1 ? containerSize : containerSize * imageRatio;
+    const baseRenderHeight = imageRatio >= 1 ? containerSize / imageRatio : containerSize;
     const renderWidth = baseRenderWidth * crop.zoom;
     const renderHeight = baseRenderHeight * crop.zoom;
     const shiftX = (crop.offsetX / 100) * containerSize;

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import Cropper, { type Area } from "react-easy-crop";
 import { motion } from "framer-motion";
 import {
   AlertCircle,
@@ -11,13 +10,14 @@ import {
   ImageIcon,
   Loader2,
   Sparkles,
-  ZoomIn,
 } from "lucide-react";
 
 import { validateImage } from "@/utils/image/compressors/validation";
 import { formatBytes } from "@/utils/image/compressors/formatBytes";
 import type { CompressionConfig } from "@/types";
-import { getCroppedImg } from "@/utils/image/favicons/cropImage";
+import type { CropSettings } from "@/types";
+import cropImageFromPreview from "@/components/global/image-cropper/cropImageFromPreview";
+import CropImage from "@/components/global/image-cropper/CropImage";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -54,9 +54,12 @@ function getErrorMessage(err: unknown): string {
 export default function FaviconGeneratorPage() {
   const [originalFile, setOriginalFile] = useState<File | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [crop, setCrop] = useState({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(1);
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
+  const [crop, setCrop] = useState<CropSettings>({
+    zoom: 1,
+    offsetX: 0,
+    offsetY: 0,
+    frameSize: 92,
+  });
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -86,9 +89,7 @@ export default function FaviconGeneratorPage() {
     const url = URL.createObjectURL(file);
     objectUrlRef.current = url;
     setImageUrl(url);
-    setCrop({ x: 0, y: 0 });
-    setZoom(1);
-    setCroppedAreaPixels(null);
+    setCrop({ zoom: 1, offsetX: 0, offsetY: 0, frameSize: 92 });
   }, []);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -98,12 +99,8 @@ export default function FaviconGeneratorPage() {
     e.target.value = "";
   };
 
-  const onCropComplete = useCallback((_croppedArea: Area, croppedAreaPixels: Area) => {
-    setCroppedAreaPixels(croppedAreaPixels);
-  }, []);
-
   const handleGenerate = async () => {
-    if (!originalFile || !imageUrl || !croppedAreaPixels) {
+    if (!originalFile || !imageUrl) {
       setError("Adjust the crop, then try again.");
       return;
     }
@@ -112,7 +109,7 @@ export default function FaviconGeneratorPage() {
     setError(null);
 
     try {
-      const croppedBlob = await getCroppedImg(imageUrl, croppedAreaPixels);
+      const croppedBlob = await cropImageFromPreview(imageUrl, originalFile.name, crop);
 
       const formData = new FormData();
       formData.append("image", croppedBlob, "cropped.png");
@@ -176,7 +173,7 @@ export default function FaviconGeneratorPage() {
     if (file) applyFile(file);
   };
 
-  const canGenerate = Boolean(originalFile && croppedAreaPixels && !isGenerating);
+  const canGenerate = Boolean(originalFile && imageUrl && !isGenerating);
 
   return (
     <section className="relative w-full overflow-x-clip">
@@ -292,37 +289,15 @@ export default function FaviconGeneratorPage() {
           className="mb-6 overflow-hidden"
         >
           <Card className="overflow-hidden border-black/6 dark:border-white/10">
-            <CardContent className="space-y-4 p-0">
-              <div className="relative h-[min(22rem,70vw)] w-full bg-[#3A344E]/5 dark:bg-white/5 sm:h-96">
-                <Cropper
-                  image={imageUrl}
-                  crop={crop}
-                  zoom={zoom}
-                  aspect={1}
-                  onCropChange={setCrop}
-                  onZoomChange={setZoom}
-                  onCropComplete={onCropComplete}
-                />
-              </div>
-              <div className="space-y-2 px-4 pb-4 sm:px-6">
-                <div className="flex items-center gap-2 text-sm font-semibold text-[#141414] dark:text-white">
-                  <ZoomIn className="size-4 text-[#1856FF]" aria-hidden />
-                  Zoom
-                </div>
-                <input
-                  type="range"
-                  min={1}
-                  max={3}
-                  step={0.05}
-                  value={zoom}
-                  onChange={(e) => setZoom(Number(e.target.value))}
-                  className="h-2 w-full cursor-pointer accent-[#1856FF]"
-                  aria-valuemin={1}
-                  aria-valuemax={3}
-                  aria-valuenow={zoom}
-                  aria-label="Crop zoom"
-                />
-              </div>
+            <CardContent className="p-4 sm:p-6">
+              <CropImage
+                imageUrl={imageUrl}
+                imageAlt={originalFile?.name ?? "Favicon crop"}
+                crop={crop}
+                onCropChange={setCrop}
+                minFrameSize={64}
+                maxFrameSize={100}
+              />
             </CardContent>
           </Card>
         </motion.div>

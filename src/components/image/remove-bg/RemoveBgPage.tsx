@@ -26,6 +26,8 @@ import {
 import OutOfMemoryDialog from "./OutOfMemoryDialog";
 
 const API_URL = process.env.NEXT_PUBLIC_FAST_API_URL || "http://localhost:8000";
+const API_KEY = process.env.NEXT_PUBLIC_FAST_API_KEY || "";
+
 // Allowed image formats and size limit
 const ALLOWED_MIME_TYPES = [
   "image/jpeg",
@@ -190,9 +192,16 @@ export default function RemoveBgPage() {
     const formData = new FormData();
     formData.append("files", originalFile);
 
+    // Prepare headers – include Authorization if API_KEY is provided
+    const headers: HeadersInit = {};
+    if (API_KEY) {
+      headers["Authorization"] = `Bearer ${API_KEY}`;
+    }
+
     try {
       const response = await fetch(`${API_URL}/remove-bg`, {
         method: "POST",
+        headers,
         body: formData,
         // Do not set Content-Type header; browser will set it with boundary
       });

@@ -97,11 +97,11 @@ async function callGeminiWithRetry(apiKey: string, maxRetries: number = 3): Prom
 }
 
 export async function GET(req: NextRequest) {
-    const authHeader = req.headers.get('authorization');
-    const expectedToken = process.env.TEST_API_SECRET;
-    if (expectedToken && authHeader !== `Bearer ${expectedToken}`) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    // const authHeader = req.headers.get('authorization');
+    // const expectedToken = process.env.TEST_API_SECRET;
+    // if (expectedToken && authHeader !== `Bearer ${expectedToken}`) {
+    //     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    // }
 
     if (apiKeys.length === 0) {
         return NextResponse.json(

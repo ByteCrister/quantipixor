@@ -23,7 +23,11 @@ export function OutputPanel({ html, rawText, activeTab }: OutputPanelProps) {
       {activeTab === "formatted" ? (
         <div
           className="h-96 overflow-y-auto p-4 prose prose-sm max-w-none"
-          style={{ fontFamily: "Calibri, 'Segoe UI', Arial, sans-serif", fontSize: "11pt" }}
+          style={{
+            fontFamily: "Georgia, 'Times New Roman', serif",
+            fontSize: "1rem",
+            lineHeight: 1.6,
+          }}
           dangerouslySetInnerHTML={{ __html: html }}
         />
       ) : (

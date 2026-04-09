@@ -66,14 +66,16 @@ export default function OcrDocFormatterPage() {
         setProgress({
           current: i + 1,
           total: files.length,
-          status: `Uploading image ${i + 1}/${files.length}…`,
+          status: `Processing image ${i + 1}/${files.length}…`,
         });
 
         const formData = new FormData();
         formData.append("file", file);
+        // Send languages as a single string joined by '+'
         formData.append("langs", selectedLanguages.join("+"));
 
-        const response = await fetch("/api/v1/ocr/genai", {
+        // Use the new OCR.Space endpoint
+        const response = await fetch("/api/v1/ocr/ocr-space", {
           method: "POST",
           body: formData,
         });
@@ -81,46 +83,35 @@ export default function OcrDocFormatterPage() {
         if (!response.ok) {
           let message = "OCR request failed";
           try {
-            const data = (await response.json()) as {
-              error?: string;
-              code?: string;
-              retryAfterSeconds?: number;
-            };
-            if (typeof data.error === "string") message = data.error;
-            if (data.code === "RATE_LIMITED") {
-              const wait =
-                typeof data.retryAfterSeconds === "number" && data.retryAfterSeconds > 0
-                  ? ` Try again in ~${Math.ceil(data.retryAfterSeconds)}s.`
-                  : "";
-              message = `Cloudflare rate limit exceeded.${wait}`;
+            const data = await response.json();
+            if (data.error) message = data.error;
+            if (data.code === "QUOTA_EXHAUSTED") {
+              message = "OCR.Space daily limit reached. Try again tomorrow.";
+            } else if (data.code === "TIMEOUT") {
+              message = "OCR service timed out. Try a smaller or clearer image.";
             }
-          } catch {
-            // ignore
-          }
+          } catch { /* ignore */ }
           throw new Error(message);
         }
 
-        const data = (await response.json()) as
-          | { success: true; html: string; plainText: string }
-          | { success: false; error: string };
-
+        const data = await response.json();
         if (!data.success) {
           throw new Error(data.error || "OCR failed");
         }
 
         htmlParts.push(
           files.length > 1
-            ? `<h2>Page ${i + 1}</h2>\n${data.html}`
-            : data.html,
+            ? `<h2 class="text-lg font-bold mt-4 mb-2">Page ${i + 1}</h2>\n${data.html}`
+            : data.html
         );
         rawParts.push(data.plainText);
       }
 
-      setFormattedHtml(htmlParts.join("\n<hr />\n"));
+      setFormattedHtml(htmlParts.join("\n<hr class=\"my-6 border-t border-gray-300\" />\n"));
       setRawText(rawParts.join("\n\n").trim());
+      toast({ variant: "success", title: "OCR complete", message: "Text extracted successfully." });
     } catch (error) {
       console.error("OCR processing failed:", error);
-      setProgress({ current: 0, total: files.length, status: "Error processing images" });
       toast({
         variant: "error",
         title: "OCR failed",

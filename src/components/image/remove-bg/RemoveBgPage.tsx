@@ -27,6 +27,7 @@ import OutOfMemoryDialog from "./OutOfMemoryDialog";
 
 const API_URL = process.env.NEXT_PUBLIC_FAST_API_URL || "http://localhost:8000";
 const API_KEY = process.env.NEXT_PUBLIC_FAST_API_KEY || "";
+const REQUEST_TIMEOUT_MS = 30000; // 30 seconds
 
 // Allowed image formats and size limit
 const ALLOWED_MIME_TYPES = [
@@ -192,19 +193,24 @@ export default function RemoveBgPage() {
     const formData = new FormData();
     formData.append("files", originalFile);
 
-    // Prepare headers – include Authorization if API_KEY is provided
     const headers: HeadersInit = {};
     if (API_KEY) {
       headers["Authorization"] = `Bearer ${API_KEY}`;
     }
+
+    // Create AbortController for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
     try {
       const response = await fetch(`${API_URL}/remove-bg`, {
         method: "POST",
         headers,
         body: formData,
-        // Do not set Content-Type header; browser will set it with boundary
+        signal: controller.signal, // Attach abort signal
       });
+
+      clearTimeout(timeoutId); // Clear timeout if request completes
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -212,7 +218,6 @@ export default function RemoveBgPage() {
       }
 
       const data = await response.json();
-      // Backend returns { results: [{ filename, base64, error }] }
       const result = data.results?.[0];
       if (!result || result.error) {
         throw new Error(result?.error || "Background removal failed");
@@ -228,21 +233,37 @@ export default function RemoveBgPage() {
         message: "Your image is ready for download.",
       });
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Unknown error";
-      setError(message);
-      toast({ variant: "error", title: "Remove background failed", message });
+      // Declare a variable that lives in the whole catch scope
+      let errorMessage: string;
 
-      // Check for out‑of‑memory or server overload
+      // Handle abort/timeout error specifically
+      if (err instanceof Error && err.name === "AbortError") {
+        errorMessage = `Request timed out after ${REQUEST_TIMEOUT_MS / 1000} seconds. The server may be overloaded or your network is slow.`;
+        setError(errorMessage);
+        toast({
+          variant: "error",
+          title: "Request timeout",
+          message: errorMessage,
+        });
+      } else {
+        errorMessage = err instanceof Error ? err.message : "Unknown error";
+        setError(errorMessage);
+        toast({ variant: "error", title: "Remove background failed", message: errorMessage });
+      }
+
+      // Now errorMessage is defined in both branches and can be used here
       const isOutOfMemory =
-        message.toLowerCase().includes("memory") ||
-        message.toLowerCase().includes("timeout") ||
-        message.toLowerCase().includes("overload");
+        errorMessage.toLowerCase().includes("memory") ||
+        errorMessage.toLowerCase().includes("timeout") ||
+        errorMessage.toLowerCase().includes("overload");
+
       if (isOutOfMemory) {
         setIsOutOfMemoryDialogOpen(true);
       }
     } finally {
       setIsLoading(false);
       setLoadingStatus(null);
+      clearTimeout(timeoutId); // Safety cleanup
     }
   };
 

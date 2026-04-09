@@ -5,10 +5,6 @@ import { CropSettings } from "@/types";
 import { FILE_INPUT_ACCEPT } from "@/const/image-extensions";
 import { formatBytes } from "@/utils/image/compressors/formatBytes";
 import { validateImage } from "@/utils/image/compressors/validation";
-import type {
-  BgRemovalWorkerRequest,
-  BgRemovalWorkerResponse,
-} from "@/utils/image/workers/bgRemoval.types";
 import cropImageFromPreview from "../../global/image-cropper/cropImageFromPreview";
 import CropImage from "@/components/global/image-cropper/CropImage";
 import { withExtension } from "../batch-compressor/loadImage";
@@ -29,6 +25,7 @@ import {
 } from "lucide-react";
 import OutOfMemoryDialog from "./OutOfMemoryDialog";
 
+const API_URL = process.env.NEXT_PUBLIC_BG_REMOVER_API || "http://localhost:8000";
 // Allowed image formats and size limit
 const ALLOWED_MIME_TYPES = [
   "image/jpeg",
@@ -92,80 +89,6 @@ export default function RemoveBgPage() {
     };
   }, []);
 
-  const getWorker = useCallback(() => {
-    if (workerRef.current) return workerRef.current;
-
-    // Next.js worker bundling (module worker).
-    workerRef.current = new Worker(
-      new URL("@/utils/image/workers/bgRemoval.worker.ts", import.meta.url),
-      { type: "module" },
-    );
-    return workerRef.current;
-  }, []);
-
-  const removeBgInWorker = useCallback(
-    async (file: File) => {
-      const worker = getWorker();
-      const id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-      const imageData = await file.arrayBuffer();
-
-      const request: BgRemovalWorkerRequest = {
-        id,
-        type: "removeBackground",
-        imageData,
-        mimeType: file.type || "image/png",
-        fileName: file.name,
-      };
-
-      return await new Promise<string>((resolve, reject) => {
-        const onMessage = (event: MessageEvent<BgRemovalWorkerResponse>) => {
-          const msg = event.data;
-
-          if (msg.type === "loading") {
-            setLoadingStatus(msg.status ?? "Loading background removal model...");
-            return;
-          }
-          if (msg.type === "loadingComplete") {
-            setLoadingStatus(null);
-            return;
-          }
-          if (msg.type === "loadingError") {
-            setLoadingStatus(null);
-            reject(new Error(msg.error || "Failed to load background removal model"));
-            return;
-          }
-
-          // Request/response messages are correlated by id.
-          if ("id" in msg && msg.id !== id) return;
-
-          if (msg.type === "success") {
-            cleanup();
-            resolve(msg.resultBase64);
-          } else if (msg.type === "error") {
-            cleanup();
-            const err = new Error(msg.error || "Background removal failed");
-            (err as Error & { isOutOfMemory?: boolean }).isOutOfMemory = Boolean(msg.isOutOfMemory);
-            reject(err);
-          }
-        };
-
-        const onError = () => {
-          cleanup();
-          reject(new Error("Background removal worker crashed"));
-        };
-
-        const cleanup = () => {
-          worker.removeEventListener("message", onMessage as EventListener);
-          worker.removeEventListener("error", onError as EventListener);
-        };
-
-        worker.addEventListener("message", onMessage as EventListener);
-        worker.addEventListener("error", onError as EventListener);
-        worker.postMessage(request);
-      });
-    },
-    [getWorker],
-  );
 
   const setPreviewObjectUrl = useCallback((url: string | null) => {
     if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
@@ -249,34 +172,62 @@ export default function RemoveBgPage() {
     }
   };
 
+
+  // ------------------------------------------------------------------
+  // Background removal via FastAPI backend
+  // ------------------------------------------------------------------
   const handleRemoveBackground = async () => {
     if (!originalFile) {
-      setError('Select an image first.');
+      setError("Select an image first.");
       return;
     }
-  
+
     setIsLoading(true);
     setError(null);
     setResultImageUrl(null);
-    setLoadingStatus(null);
-  
+    setLoadingStatus("Sending image to server...");
+
+    const formData = new FormData();
+    formData.append("files", originalFile);
+
     try {
-      // Prefer fully client-side background removal to avoid serverless native deps (Vercel).
-      const resultBase64 = await removeBgInWorker(originalFile);
-      setResultImageUrl(resultBase64);
+      const response = await fetch(`${API_URL}/remove-bg`, {
+        method: "POST",
+        body: formData,
+        // Do not set Content-Type header; browser will set it with boundary
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || `Server responded with ${response.status}`);
+      }
+
+      const data = await response.json();
+      // Backend returns { results: [{ filename, base64, error }] }
+      const result = data.results?.[0];
+      if (!result || result.error) {
+        throw new Error(result?.error || "Background removal failed");
+      }
+      if (!result.base64) {
+        throw new Error("Server did not return an image");
+      }
+
+      setResultImageUrl(result.base64);
       toast({
-        variant: 'success',
-        title: 'Background removed',
-        message: 'Your image is ready for download.',
+        variant: "success",
+        title: "Background removed",
+        message: "Your image is ready for download.",
       });
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
+      const message = err instanceof Error ? err.message : "Unknown error";
       setError(message);
-      toast({ variant: 'error', title: 'Remove background failed', message });
+      toast({ variant: "error", title: "Remove background failed", message });
+
+      // Check for out‑of‑memory or server overload
       const isOutOfMemory =
-        (err instanceof Error && "isOutOfMemory" in err && Boolean((err as { isOutOfMemory?: boolean }).isOutOfMemory)) ||
         message.toLowerCase().includes("memory") ||
-        message.toLowerCase().includes("out of memory");
+        message.toLowerCase().includes("timeout") ||
+        message.toLowerCase().includes("overload");
       if (isOutOfMemory) {
         setIsOutOfMemoryDialogOpen(true);
       }

@@ -23,7 +23,7 @@ export default function OutOfMemoryDialog({ open, onClose }: OutOfMemoryDialogPr
             <DialogContent
                 className={cn(
                     plusJakarta.className,
-                    "sm:max-w-[420px] p-0 overflow-hidden rounded-[20px] border-0",
+                    "sm:max-w-105 p-0 overflow-hidden rounded-[20px] border-0",
                     "bg-linear-to-br from-white/72 to-blue-50/62 backdrop-blur-2xl",
                     "shadow-[0_4px_32px_rgba(24,86,255,0.08),inset_0_1px_0_rgba(255,255,255,0.9)]",
                     "border border-white/85",
@@ -37,7 +37,7 @@ export default function OutOfMemoryDialog({ open, onClose }: OutOfMemoryDialogPr
                 <div className="px-7 pt-7 pb-7">
                     <div
                         className={cn(
-                            "flex items-center justify-center rounded-[14px] mb-[18px]",
+                            "flex items-center justify-center rounded-[14px] mb-4.5",
                             "bg-linear-to-br from-[#EA2143]/12 to-[#EA2143]/6 border border-[#EA2143]/18",
                             "dark:from-[#EA2143]/20 dark:to-[#EA2143]/8 dark:border-[#EA2143]/28"
                         )}
@@ -60,7 +60,7 @@ export default function OutOfMemoryDialog({ open, onClose }: OutOfMemoryDialogPr
                     <Button
                         onClick={onClose}
                         className={cn(
-                            "rounded-[10px] text-sm font-semibold h-9 px-[22px]",
+                            "rounded-[10px] text-sm font-semibold h-9 px-5.5",
                             "bg-linear-to-br from-[#1856FF] to-[#3a6fff] text-white border-0",
                             "shadow-[0_2px_12px_rgba(24,86,255,0.28),inset_0_1px_0_rgba(255,255,255,0.2)]",
                             "hover:shadow-[0_4px_16px_rgba(24,86,255,0.36)] hover:-translate-y-px transition-all duration-150",

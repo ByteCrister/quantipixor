@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 import OutOfMemoryDialog from "./OutOfMemoryDialog";
 
-const API_URL = process.env.NEXT_PUBLIC_BG_REMOVER_API || "http://localhost:8000";
+const API_URL = process.env.NEXT_PUBLIC_FAST_API_URL || "http://localhost:8000";
 // Allowed image formats and size limit
 const ALLOWED_MIME_TYPES = [
   "image/jpeg",

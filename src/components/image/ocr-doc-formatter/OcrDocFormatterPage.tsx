@@ -180,21 +180,21 @@ export default function OcrDocFormatterPage() {
       {/* ── Ambient background blobs ── */}
       <div
         aria-hidden
-        className="pointer-events-none fixed -top-24 -left-24 h-[500px] w-[500px] rounded-full"
+        className="pointer-events-none fixed -top-24 -left-24 h-125 w-125 rounded-full"
         style={{ background: "rgba(24,86,255,0.12)", filter: "blur(80px)" }}
       />
       <div
         aria-hidden
-        className="pointer-events-none fixed -bottom-20 -right-20 h-[400px] w-[400px] rounded-full"
+        className="pointer-events-none fixed -bottom-20 -right-20 h-100 w-100 rounded-full"
         style={{ background: "rgba(7,202,107,0.08)", filter: "blur(80px)" }}
       />
       <div
         aria-hidden
-        className="pointer-events-none fixed left-1/2 top-1/2 h-[350px] w-[350px] -translate-x-1/2 -translate-y-1/2 rounded-full"
+        className="pointer-events-none fixed left-1/2 top-1/2 h-87.5 w-87.5 -translate-x-1/2 -translate-y-1/2 rounded-full"
         style={{ background: "rgba(139,92,246,0.08)", filter: "blur(80px)" }}
       />
 
-      <div className="relative z-10 mx-auto max-w-[1100px] px-5 py-8">
+      <div className="relative z-10 mx-auto max-w-275 px-5 py-8">
         {/* ── Header ── */}
         <motion.header
           className="mb-10 text-center"
@@ -362,7 +362,7 @@ export default function OcrDocFormatterPage() {
             </div>
 
             {/* Output panel */}
-            <div className="min-h-[220px] max-h-[340px] flex-1 overflow-y-auto rounded-[10px] border border-white/90 bg-white/45 p-4 font-mono text-xs leading-7 text-[rgba(20,20,20,0.55)]">
+            <div className="min-h-55 max-h-85 flex-1 overflow-y-auto rounded-[10px] border border-white/90 bg-white/45 p-4 font-mono text-xs leading-7 text-[rgba(20,20,20,0.55)]">
               <OutputPanel
                 html={formattedHtml}
                 rawText={rawText}
@@ -383,7 +383,7 @@ export default function OcrDocFormatterPage() {
                   <GhostButton icon={<FiFileText size={13} />} label="Copy Raw" onClick={handleCopyRaw} />
                   <GhostButton icon={<FiDownload size={13} />} label="Download HTML" onClick={handleDownloadHtml} />
                   <motion.button
-                    className="flex cursor-pointer items-center gap-1.5 rounded-[10px] border-none bg-linear-to-br from-[#07CA6B] to-[#05a558] px-3.5 py-[7px] text-xs font-bold text-white shadow-[0_2px_10px_rgba(7,202,107,0.12)] transition-shadow duration-200 hover:shadow-[0_4px_16px_rgba(7,202,107,0.3)]"
+                    className="flex cursor-pointer items-center gap-1.5 rounded-[10px] border-none bg-linear-to-br from-[#07CA6B] to-[#05a558] px-3.5 py-1.75 text-xs font-bold text-white shadow-[0_2px_10px_rgba(7,202,107,0.12)] transition-shadow duration-200 hover:shadow-[0_4px_16px_rgba(7,202,107,0.3)]"
                     onClick={handleExportDocx}
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.97 }}
@@ -439,7 +439,7 @@ function TabButton({
 }) {
   return (
     <button
-      className={`flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-[7px] border-none px-3 py-[7px] text-xs font-semibold transition-all duration-180 ${active
+      className={`flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-[7px] border-none px-3 py-1.75 text-xs font-semibold transition-all duration-180 ${active
         ? "bg-white/72 text-[#141414] shadow-[0_2px_8px_rgba(0,0,0,0.08)]"
         : "bg-transparent text-[rgba(20,20,20,0.55)] hover:text-[#1856FF]"
         }`}
@@ -462,7 +462,7 @@ function GhostButton({
 }) {
   return (
     <motion.button
-      className="flex cursor-pointer items-center gap-1.5 rounded-[10px] border border-white/90 bg-white/45 px-3.5 py-[7px] text-xs font-semibold text-[rgba(20,20,20,0.55)] transition-all duration-180 hover:border-[rgba(24,86,255,0.25)] hover:bg-[rgba(24,86,255,0.12)] hover:text-[#1856FF]"
+      className="flex cursor-pointer items-center gap-1.5 rounded-[10px] border border-white/90 bg-white/45 px-3.5 py-1.75 text-xs font-semibold text-[rgba(20,20,20,0.55)] transition-all duration-180 hover:border-[rgba(24,86,255,0.25)] hover:bg-[rgba(24,86,255,0.12)] hover:text-[#1856FF]"
       onClick={onClick}
       whileHover={{ scale: 1.03 }}
       whileTap={{ scale: 0.97 }}

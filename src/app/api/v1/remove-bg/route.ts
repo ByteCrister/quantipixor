@@ -69,7 +69,7 @@ function hasRawMaskData(mask: unknown): mask is RawMaskLike {
 }
 
 // ============================================================================
-// Lazy loader for the segmentation pipeline (fixes build OOM + runtime WASM)
+// Lazy loader for the segmentation pipeline (fixed WASM backend)
 // ============================================================================
 
 async function getSegmenter(): Promise<Segmenter> {
@@ -77,31 +77,20 @@ async function getSegmenter(): Promise<Segmenter> {
   if (loadingSegmenter) return loadingSegmenter;
 
   loadingSegmenter = (async () => {
-    // Force WASM backend BEFORE importing transformers (prevents native binding)
-    process.env.ORT_NODE_BACKEND = "wasm";
+    // 1. CRITICAL: Force WASM priority BEFORE importing transformers
+    // This overrides the default CPU native backend selection
+    const { env } = await import("@huggingface/transformers");
+    env.backends.onnx = { wasm: {} };  // Set backend to use WASM
 
-    // Dynamically import the heavy module only when needed
-    const { pipeline, env } = await import("@huggingface/transformers");
-
-    // Configure transformers.js environment
+    // 2. Other environment settings
     env.useBrowserCache = false;
     env.allowLocalModels = true;
     env.cacheDir = "/tmp/transformers_cache";
 
-    // Provide explicit WASM file paths (required for Vercel serverless)
-    env.backends = {
-      onnx: {
-        wasm: {
-          wasmPaths: {
-            wasm: "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.14.0/dist/ort-wasm-simd-threaded.wasm",
-            mjs: "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.14.0/dist/ort-wasm-simd-threaded.mjs",
-          },
-          numThreads: 1, // keep low for serverless environments
-        },
-      },
-    };
-
+    // 3. Now import and create the pipeline (WASM will be used)
+    const { pipeline } = await import("@huggingface/transformers");
     const instance = await pipeline("image-segmentation", "Xenova/modnet");
+    
     cachedSegmenter = instance as unknown as Segmenter;
     return cachedSegmenter;
   })();

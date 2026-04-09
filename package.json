@@ -6,12 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint",
-    "postinstall": "rm -rf node_modules/onnxruntime-node"
+    "lint": "eslint"
   },
   "dependencies": {
     "@google/genai": "^1.48.0",
     "@huggingface/transformers": "^4.0.1",
+    "@imgly/background-removal": "^1.7.0",
     "@radix-ui/react-alert-dialog": "^1.1.15",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-slot": "^1.2.4",

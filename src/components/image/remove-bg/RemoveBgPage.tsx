@@ -268,20 +268,25 @@ export default function RemoveBgPage() {
   };
 
   const handleDownload = () => {
-    if (!resultImageUrl) return;
-    const mimeType = resultImageUrl.split(";")[0].split(":")[1];
-    const extension = getExtensionFromMime(mimeType) || ".png";
-    const fileName = `bg-removed-${Date.now()}${extension}`;
-    const blob = base64ToBlob(resultImageUrl, mimeType);
-    const url = URL.createObjectURL(blob);
+    if (!resultImageUrl || !originalFile) return;
+
+    // Extract original file name without extension
+    const originalName = originalFile.name.replace(/\.[^/.]+$/, "");
+    const fileName = `${originalName}-bg-removed.png`;
+
+    // Create a temporary anchor to trigger download
     const link = document.createElement("a");
-    link.href = url;
+    link.href = resultImageUrl;
     link.download = fileName;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    toast({ variant: "info", title: "Download", message: `${fileName} saved.` });
+
+    toast({
+      variant: "info",
+      title: "Download",
+      message: `${fileName} saved.`
+    });
   };
 
   const handleReset = () => {

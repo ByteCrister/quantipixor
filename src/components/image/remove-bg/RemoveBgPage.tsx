@@ -25,9 +25,19 @@ import {
 } from "lucide-react";
 import OutOfMemoryDialog from "./OutOfMemoryDialog";
 
-const API_URL = process.env.NEXT_PUBLIC_FAST_API_URL || "http://localhost:8000";
-const API_KEY = process.env.NEXT_PUBLIC_FAST_API_KEY || "";
-const REQUEST_TIMEOUT_MS = 30000; // 30 seconds
+const API_URL = '/api/v1/bg-remove/bria-rmbg';
+const REQUEST_TIMEOUT_MS = 3 * 60000; // 3 minute
+const LOADING_MESSAGES = [
+  "Analyzing your image...",
+  "Detecting edges and structure...",
+  "Mapping foreground elements...",
+  "Separating subject from background...",
+  "Removing background...",
+  "Refining edges and details...",
+  "Almost there, polishing the result...",
+  "This usually takes 1–2 minutes, hang tight!",
+  "Still working, nearly done...",
+];
 
 // Allowed image formats and size limit
 const ALLOWED_MIME_TYPES = [
@@ -188,82 +198,64 @@ export default function RemoveBgPage() {
     setIsLoading(true);
     setError(null);
     setResultImageUrl(null);
-    setLoadingStatus("Sending image to server...");
+
+    // Start cycling through loading messages
+    let msgIndex = 0;
+    setLoadingStatus(LOADING_MESSAGES[0]);
+    const messageInterval = setInterval(() => {
+      msgIndex = Math.min(msgIndex + 1, LOADING_MESSAGES.length - 1);
+      setLoadingStatus(LOADING_MESSAGES[msgIndex]);
+    }, 8000); // advance every 8 seconds
 
     const formData = new FormData();
-    formData.append("files", originalFile);
+    formData.append("file", originalFile);
 
-    const headers: HeadersInit = {};
-    if (API_KEY) {
-      headers["Authorization"] = `Bearer ${API_KEY}`;
-    }
-
-    // Create AbortController for timeout
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
     try {
-      const response = await fetch(`${API_URL}/remove-bg`, {
+      const response = await fetch(API_URL, {
         method: "POST",
-        headers,
         body: formData,
-        signal: controller.signal, // Attach abort signal
+        signal: controller.signal,
       });
 
-      clearTimeout(timeoutId); // Clear timeout if request completes
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || `Server responded with ${response.status}`);
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Server error: ${response.status}`);
       }
 
-      const data = await response.json();
-      const result = data.results?.[0];
-      if (!result || result.error) {
-        throw new Error(result?.error || "Background removal failed");
-      }
-      if (!result.base64) {
-        throw new Error("Server did not return an image");
-      }
+      const imageBlob = await response.blob();
+      const resultUrl = URL.createObjectURL(imageBlob);
+      setResultImageUrl(resultUrl);
 
-      setResultImageUrl(result.base64);
       toast({
         variant: "success",
         title: "Background removed",
         message: "Your image is ready for download.",
       });
     } catch (err) {
-      // Declare a variable that lives in the whole catch scope
       let errorMessage: string;
-
-      // Handle abort/timeout error specifically
       if (err instanceof Error && err.name === "AbortError") {
-        errorMessage = `Request timed out after ${REQUEST_TIMEOUT_MS / 1000} seconds. The server may be overloaded or your network is slow.`;
-        setError(errorMessage);
-        toast({
-          variant: "error",
-          title: "Request timeout",
-          message: errorMessage,
-        });
+        errorMessage = `Request timed out after ${REQUEST_TIMEOUT_MS / 1000} seconds.`;
       } else {
         errorMessage = err instanceof Error ? err.message : "Unknown error";
-        setError(errorMessage);
-        toast({ variant: "error", title: "Remove background failed", message: errorMessage });
       }
+      setError(errorMessage);
+      toast({ variant: "error", title: "Background removal failed", message: errorMessage });
 
-      // Now errorMessage is defined in both branches and can be used here
       const isOutOfMemory =
         errorMessage.toLowerCase().includes("memory") ||
         errorMessage.toLowerCase().includes("timeout") ||
         errorMessage.toLowerCase().includes("overload");
-
-      if (isOutOfMemory) {
-        setIsOutOfMemoryDialogOpen(true);
-      }
+      if (isOutOfMemory) setIsOutOfMemoryDialogOpen(true);
     } finally {
+      clearInterval(messageInterval); // ← always clean up
       setIsLoading(false);
       setLoadingStatus(null);
-      clearTimeout(timeoutId); // Safety cleanup
+      clearTimeout(timeoutId);
     }
   };
 

@@ -20,6 +20,8 @@ import {
 import { HiOutlineDocumentText } from "react-icons/hi2";
 import { TbFileTypeCsv } from "react-icons/tb";
 
+const OCR_API_URL = `/api/v1/ocr/ocr-space`;
+
 export default function OcrDocFormatterPage() {
   const [files, setFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
@@ -71,11 +73,9 @@ export default function OcrDocFormatterPage() {
 
         const formData = new FormData();
         formData.append("file", file);
-        // Send languages as a single string joined by '+'
         formData.append("langs", selectedLanguages.join("+"));
 
-        // Use the new OCR.Space endpoint
-        const response = await fetch("/api/v1/ocr/ocr-space", {
+        const response = await fetch(OCR_API_URL, {
           method: "POST",
           body: formData,
         });
@@ -85,11 +85,6 @@ export default function OcrDocFormatterPage() {
           try {
             const data = await response.json();
             if (data.error) message = data.error;
-            if (data.code === "QUOTA_EXHAUSTED") {
-              message = "OCR.Space daily limit reached. Try again tomorrow.";
-            } else if (data.code === "TIMEOUT") {
-              message = "OCR service timed out. Try a smaller or clearer image.";
-            }
           } catch { /* ignore */ }
           throw new Error(message);
         }
@@ -99,6 +94,7 @@ export default function OcrDocFormatterPage() {
           throw new Error(data.error || "OCR failed");
         }
 
+        // Use the HTML and plain text returned by the API
         htmlParts.push(
           files.length > 1
             ? `<h2 class="text-lg font-bold mt-4 mb-2">Page ${i + 1}</h2>\n${data.html}`
@@ -121,6 +117,7 @@ export default function OcrDocFormatterPage() {
       setIsProcessing(false);
     }
   };
+
 
   const handleExportDocx = async () => {
     if (!formattedHtml) return;

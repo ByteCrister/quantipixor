@@ -82,7 +82,7 @@ async function callOcrSpace(
     const timeoutId = setTimeout(() => controller.abort(), 15000);
 
     try {
-        const response = await fetch("https://api.ocr.space/parse/image", {
+        const response = await fetch(process.env.OCR_SPACE_API_URL as string, {
             method: "POST",
             body: formData,
             signal: controller.signal,

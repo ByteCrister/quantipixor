@@ -80,9 +80,9 @@ export const metadata: Metadata = {
     apple: "/apple-touch-icon.png",  
   },  
   
-  // verification: {  
-  //   google: "GOOGLE_SITE_VERIFICATION_CODE",  
-  // },  
+  verification: {  
+    google: process.env.GOOGLE_SITE_VERIFICATION_CODE,  
+  },  
 };
 
 export default function RootLayout({

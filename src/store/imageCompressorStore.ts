@@ -12,7 +12,7 @@ import { computeFileHash } from '@/utils/image/compressors/hash';
 import { validateImage } from '@/utils/image/compressors/validation';
 import { compressImage } from '@/utils/image/compressors/compress';
 import { generateImagesZip } from '@/utils/image/compressors/zipGenerator';
-import { SUPPORTED_MIME_TYPES } from '@/const/image-extensions';
+import { SUPPORTED_MIME_TYPES, mimeToOutputExtension } from '@/const/image-extensions';
 import {
     MAX_IMAGES_PER_UPLOAD,
     MAX_TOTAL_IMAGES,
@@ -284,6 +284,25 @@ export const useImageCompressorStore = create<ImageCompressorStore>(
             set({ isDownloading: true });
 
             try {
+                // Single image → download directly, no ZIP needed
+                if (completedImages.length === 1) {
+                    const single = completedImages[0]!;
+                    const blob = single.compressedBlob!;
+                    const ext = mimeToOutputExtension(blob.type);
+                    const baseName = config.baseName.trim() || 'image';
+                    const fileName = `${baseName}-compressed.${ext}`;
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = fileName;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+                    return true;
+                }
+
+                // Multiple images → bundle as ZIP
                 const zipBlob = await generateImagesZip(completedImages, config);
                 const url = URL.createObjectURL(zipBlob);
                 const link = document.createElement('a');

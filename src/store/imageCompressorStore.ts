@@ -185,7 +185,7 @@ export const useImageCompressorStore = create<ImageCompressorStore>(
         },
 
         setBatchSize: (size: number) => {
-            const batchSize = Math.max(1, Math.min(100, size));
+            const batchSize = Math.max(1, Math.min(1500, size));
             set((state) => ({
                 config: { ...state.config, batchSize },
             }));

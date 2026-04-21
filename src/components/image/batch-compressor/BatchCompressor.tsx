@@ -454,11 +454,11 @@ export default function BatchCompressor() {
                   className={inputClass}
                 />
               </Field>
-              <Field label="Images per folder" hint="batch-1, batch-2, …">
+              <Field label="Images per folder" hint="batch-1, batch-2, … (max 1500)">
                 <input
                   type="number"
                   min={1}
-                  max={100}
+                  max={1500}
                   value={config.batchSize}
                   onChange={(e) => setBatchSize(parseInt(e.target.value, 10) || 1)}
                   className={inputClass}

@@ -1,12 +1,16 @@
 "use client";
 
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import {
   Archive,
   CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
   CloudUpload,
+  Download,
+  FileDown,
   FileWarning,
   HardDrive,
   Images,
@@ -51,6 +55,33 @@ import type { ImageItem } from "@/types";
 import ImagePreviewDialog from "./ImagePreviewDialog";
 import { Field, IndeterminateBar, inputClass, ProgressBar, StatCard } from "./loadImage";
 
+// ── Constants ────────────────────────────────────────────────────────────────
+const ITEMS_PER_PAGE = 24;
+
+type DownloadMode = "zip" | "individual";
+
+// ── Pagination helper ─────────────────────────────────────────────────────────
+function buildPageNumbers(current: number, total: number): (number | "...")[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  const delta = 2;
+  const range: number[] = [];
+  for (
+    let i = Math.max(2, current - delta);
+    i <= Math.min(total - 1, current + delta);
+    i++
+  ) {
+    range.push(i);
+  }
+  const pages: (number | "...")[] = [1];
+  if (range[0] !== undefined && range[0] > 2) pages.push("...");
+  pages.push(...range);
+  if (range[range.length - 1] !== undefined && range[range.length - 1]! < total - 1)
+    pages.push("...");
+  if (total > 1) pages.push(total);
+  return pages;
+}
+
+// ── Component ─────────────────────────────────────────────────────────────────
 export default function BatchCompressor() {
   const images = useImages();
   const config = useConfig();
@@ -61,16 +92,22 @@ export default function BatchCompressor() {
   const pendingCount = usePendingImagesCount();
   const errorCount = useErrorImagesCount();
   const compressionProgress = useCompressionProgress();
+
   const [isDragging, setIsDragging] = useState(false);
-  const [pendingConfirm, setPendingConfirm] = useState<BatchConfirmAction | null>(
-    null,
-  );
+  const [pendingConfirm, setPendingConfirm] = useState<BatchConfirmAction | null>(null);
   const [previewImageId, setPreviewImageId] = useState<string | null>(null);
+
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Download mode – only relevant when 2 ≤ images.length ≤ 9
+  const [downloadMode, setDownloadMode] = useState<DownloadMode>("zip");
 
   const {
     addFiles,
     compressAll,
     downloadAsZip,
+    downloadIndividual,
     setBaseName,
     setBatchSize,
     setQuality,
@@ -80,14 +117,40 @@ export default function BatchCompressor() {
     restoreImageAt,
     replaceImageWithCrop,
   } = useImageCompressorStore();
+
   const selectedImage = useMemo(
     () => images.find((item) => item.id === previewImageId) ?? null,
     [images, previewImageId],
   );
 
+  // Clamp page when the image list shrinks (e.g. after clear / remove)
+  useEffect(() => {
+    const maxPage = Math.max(1, Math.ceil(images.length / ITEMS_PER_PAGE));
+    if (currentPage > maxPage) setCurrentPage(maxPage);
+  }, [images.length, currentPage]);
 
+  // ── Derived ────────────────────────────────────────────────────────────────
   const queueIsFull = images.length >= MAX_TOTAL_IMAGES;
   const slotsRemaining = Math.max(0, MAX_TOTAL_IMAGES - images.length);
+  const totalPages = Math.max(1, Math.ceil(images.length / ITEMS_PER_PAGE));
+  const safePage = Math.min(currentPage, totalPages);
+
+  // True only when the toggle is meaningful (2–9 images in queue)
+  const showDownloadModeToggle = images.length >= 2 && images.length <= 9;
+
+  const pagedImages = useMemo(
+    () =>
+      images.slice(
+        (safePage - 1) * ITEMS_PER_PAGE,
+        safePage * ITEMS_PER_PAGE,
+      ),
+    [images, safePage],
+  );
+
+  const pageNumbers = useMemo(
+    () => buildPageNumbers(safePage, totalPages),
+    [safePage, totalPages],
+  );
 
   const stats = useMemo(() => {
     const totalImages = images.length;
@@ -126,6 +189,7 @@ export default function BatchCompressor() {
     );
   }, [compressionProgress]);
 
+  // ── Handlers ───────────────────────────────────────────────────────────────
   const ingestFiles = useCallback(
     async (fileList: FileList | File[]) => {
       const files = Array.from(fileList);
@@ -133,7 +197,8 @@ export default function BatchCompressor() {
       const result = await addFiles(files);
       const parts: string[] = [];
       if (result.addedCount) parts.push(`+${result.addedCount} added`);
-      if (result.duplicateCount) parts.push(`${result.duplicateCount} duplicates skipped`);
+      if (result.duplicateCount)
+        parts.push(`${result.duplicateCount} duplicates skipped`);
       if (result.invalidCount) parts.push(`${result.invalidCount} invalid`);
       if (result.truncatedCount) {
         parts.push(
@@ -141,7 +206,8 @@ export default function BatchCompressor() {
         );
       }
       const hasTruncation = (result.truncatedCount ?? 0) > 0;
-      const queueRejected = hasTruncation && result.addedCount === 0 && files.length > 0;
+      const queueRejected =
+        hasTruncation && result.addedCount === 0 && files.length > 0;
       toast({
         variant: queueRejected
           ? "error"
@@ -168,7 +234,7 @@ export default function BatchCompressor() {
   };
 
   const handleRemoveImage = useCallback(
-    (image: ImageItem, index: number) => {
+    (image: ImageItem, globalIndex: number) => {
       if (isCompressing || isDownloading) return;
       const snapshot: ImageItem = { ...image };
       removeImage(image.id);
@@ -179,7 +245,7 @@ export default function BatchCompressor() {
         action: {
           label: "Undo",
           onClick: () => {
-            restoreImageAt(snapshot, index);
+            restoreImageAt(snapshot, globalIndex);
           },
         },
       });
@@ -232,19 +298,36 @@ export default function BatchCompressor() {
   };
 
   const handleDownload = async () => {
-    const ok = await downloadAsZip();
-    toast({
-      variant: ok ? "success" : "error",
-      title: "Download",
-      message: ok
-        ? "ZIP saved — check your downloads folder."
-        : "Could not create ZIP. Compress images first or try again.",
-    });
+    // Individual mode is only active when the toggle is shown AND user picked it
+    const useIndividual = showDownloadModeToggle && downloadMode === "individual";
+
+    if (useIndividual) {
+      const ok = await downloadIndividual();
+      toast({
+        variant: ok ? "success" : "error",
+        title: "Download",
+        message: ok
+          ? `${completedCount} file${completedCount === 1 ? "" : "s"} saved — check your downloads folder.`
+          : "Could not download images. Compress first or try again.",
+      });
+    } else {
+      const ok = await downloadAsZip();
+      toast({
+        variant: ok ? "success" : "error",
+        title: "Download",
+        message: ok
+          ? images.length === 1
+            ? "Image saved — check your downloads folder."
+            : "ZIP saved — check your downloads folder."
+          : "Could not create ZIP. Compress images first or try again.",
+      });
+    }
   };
 
   const handleConfirmAction = (confirmed: BatchConfirmAction) => {
     if (confirmed === "clear") {
       clearAll();
+      setCurrentPage(1);
       toast({
         variant: "info",
         title: "Cleared",
@@ -257,10 +340,26 @@ export default function BatchCompressor() {
     toast({
       variant: "success",
       title: "Reset",
-      message: `All ${images.length} image(s) are pending again — same files, ready to compress or download a new ZIP.`,
+      message: `All ${images.length} image(s) are pending again — same files, ready to compress.`,
     });
   };
 
+  // ── Label helpers ──────────────────────────────────────────────────────────
+  const downloadButtonLabel = () => {
+    if (isDownloading) {
+      return showDownloadModeToggle && downloadMode === "individual"
+        ? "Downloading…"
+        : images.length === 1
+          ? "Downloading…"
+          : "Zipping…";
+    }
+    if (images.length === 1) return "Download Image";
+    if (showDownloadModeToggle && downloadMode === "individual")
+      return `Download ${completedCount} file${completedCount === 1 ? "" : "s"}`;
+    return `Download ZIP (${completedCount})`;
+  };
+
+  // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <>
       <BatchActionConfirmDialog
@@ -310,6 +409,7 @@ export default function BatchCompressor() {
           });
         }}
       />
+
       <section className="relative w-full overflow-x-clip">
         <div
           className="pointer-events-none absolute left-0 top-0 h-72 w-72 -translate-x-1/3 rounded-full bg-[#1856FF]/10 blur-3xl"
@@ -319,9 +419,10 @@ export default function BatchCompressor() {
           className="pointer-events-none absolute right-0 top-32 h-56 w-56 translate-x-1/4 rounded-full bg-[#3A344E]/15 blur-3xl"
           aria-hidden
         />
+
         <div className="relative mx-auto max-w-6xl px-4 py-8 md:px-6 md:py-12">
 
-          {/* Header */}
+          {/* ── Header ──────────────────────────────────────────────────── */}
           <div className="relative mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <Badge variant="secondary" className="font-mono text-[10px] tracking-[0.16em]">
@@ -357,7 +458,7 @@ export default function BatchCompressor() {
             </div>
           </div>
 
-          {/* Stats dashboard */}
+          {/* ── Stats dashboard ──────────────────────────────────────────── */}
           <div className="mb-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <StatCard
               icon={Images}
@@ -398,7 +499,7 @@ export default function BatchCompressor() {
             />
           </div>
 
-          {/* Progress: compression */}
+          {/* ── Progress: compression ────────────────────────────────────── */}
           {(isCompressing || compressionProgress) && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
@@ -411,6 +512,9 @@ export default function BatchCompressor() {
                     <span className="flex items-center gap-2 text-sm font-semibold text-[#141414] dark:text-white">
                       <Loader2 className="size-4 animate-spin text-[#1856FF]" aria-hidden />
                       Compressing…
+                      <span className="text-[10px] font-normal text-[#3A344E]/60 dark:text-white/45">
+                        parallel ×6
+                      </span>
                     </span>
                     {compressionProgress && (
                       <span className="font-mono text-xs text-[#3A344E] dark:text-white/60">
@@ -424,7 +528,7 @@ export default function BatchCompressor() {
             </motion.div>
           )}
 
-          {/* Progress: ZIP */}
+          {/* ── Progress: download ───────────────────────────────────────── */}
           {isDownloading && (
             <motion.div
               initial={{ opacity: 0 }}
@@ -435,7 +539,9 @@ export default function BatchCompressor() {
                 <CardContent className="space-y-3 p-4">
                   <div className="flex items-center gap-2 text-sm font-semibold text-[#141414] dark:text-white">
                     <Loader2 className="size-4 animate-spin text-[#E89558]" aria-hidden />
-                    Building ZIP archive…
+                    {showDownloadModeToggle && downloadMode === "individual"
+                      ? "Preparing individual downloads…"
+                      : "Building ZIP archive…"}
                   </div>
                   <IndeterminateBar />
                 </CardContent>
@@ -443,7 +549,7 @@ export default function BatchCompressor() {
             </motion.div>
           )}
 
-          {/* Config */}
+          {/* ── Config ──────────────────────────────────────────────────── */}
           <Card className="mb-6 border-black/6 dark:border-white/10">
             <CardContent className="grid gap-6 p-6 md:grid-cols-3">
               <Field label="Base name" hint="Prefix in ZIP (e.g. photo → photo-1.jpg)">
@@ -480,7 +586,7 @@ export default function BatchCompressor() {
             </CardContent>
           </Card>
 
-          {/* Drop zone */}
+          {/* ── Drop zone ───────────────────────────────────────────────── */}
           <div
             onDragOver={queueIsFull ? undefined : handleDragOver}
             onDragLeave={queueIsFull ? undefined : handleDragLeave}
@@ -541,12 +647,15 @@ export default function BatchCompressor() {
             </p>
           </div>
 
+          {/* ── Upload stats banner ──────────────────────────────────────── */}
           {uploadStats && (
             <div className="mb-6 flex flex-wrap items-center gap-3 rounded-2xl border border-[#1856FF]/20 bg-[#1856FF]/6 px-4 py-3 text-sm dark:border-[#1856FF]/25">
               <FileWarning className="size-4 shrink-0 text-[#E89558]" aria-hidden />
               <span className="text-[#141414]/80 dark:text-white/75">
                 Last upload:{" "}
-                <strong className="text-[#141414] dark:text-white">{uploadStats.addedCount}</strong>{" "}
+                <strong className="text-[#141414] dark:text-white">
+                  {uploadStats.addedCount}
+                </strong>{" "}
                 added,{" "}
                 <strong>{uploadStats.duplicateCount}</strong> duplicates,{" "}
                 <strong className={uploadStats.invalidCount ? "text-[#EA2143]" : ""}>
@@ -556,17 +665,22 @@ export default function BatchCompressor() {
                 {(uploadStats.truncatedCount ?? 0) > 0 && (
                   <>
                     ,{" "}
-                    <strong className="text-[#E89558]">{uploadStats.truncatedCount}</strong> skipped
-                    (limit)
+                    <strong className="text-[#E89558]">{uploadStats.truncatedCount}</strong>{" "}
+                    skipped (limit)
                   </>
                 )}
               </span>
             </div>
           )}
 
-          {/* Actions */}
-          <div className="mb-8 flex flex-wrap gap-3">
-            <Button size="lg" disabled={isCompressing || pendingCount === 0} onClick={() => void handleCompress()}>
+          {/* ── Actions ─────────────────────────────────────────────────── */}
+          <div className="mb-6 flex flex-wrap items-center gap-3">
+            {/* Compress */}
+            <Button
+              size="lg"
+              disabled={isCompressing || pendingCount === 0}
+              onClick={() => void handleCompress()}
+            >
               {isCompressing ? (
                 <>
                   <Loader2 className="size-5 animate-spin" />
@@ -579,32 +693,74 @@ export default function BatchCompressor() {
                 </>
               )}
             </Button>
-            <Button
-              size="lg"
-              variant="secondary"
-              disabled={isDownloading || completedCount === 0}
-              onClick={() => void handleDownload()}
-            >
-              {isDownloading ? (
-                <>
-                  <Loader2 className="size-5 animate-spin" />
-                  {completedCount === 1 ? "Downloading…" : "ZIP…"}
-                </>
-              ) : (
-                <>
-                  <Archive className="size-5" />
-                  {completedCount === 1
-                    ? "Download Image"
-                    : `Download ZIP (${completedCount})`}
-                </>
+
+            {/* Download — with optional mode toggle for 2–9 images */}
+            <div className="flex items-center gap-2">
+              {showDownloadModeToggle && (
+                <div
+                  className="flex items-center gap-0.5 rounded-xl border border-black/8 bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] p-1 dark:border-white/10"
+                  role="group"
+                  aria-label="Download format"
+                >
+                  <button
+                    type="button"
+                    id="download-mode-individual"
+                    onClick={() => setDownloadMode("individual")}
+                    className={cn(
+                      "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all",
+                      downloadMode === "individual"
+                        ? "bg-[#1856FF] text-white shadow-sm"
+                        : "text-[#141414]/55 hover:text-[#141414] dark:text-white/45 dark:hover:text-white",
+                    )}
+                    title="Download each image as a separate file"
+                    aria-pressed={downloadMode === "individual"}
+                  >
+                    <FileDown className="size-3.5" aria-hidden />
+                    Individual
+                  </button>
+                  <button
+                    type="button"
+                    id="download-mode-zip"
+                    onClick={() => setDownloadMode("zip")}
+                    className={cn(
+                      "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all",
+                      downloadMode === "zip"
+                        ? "bg-[#1856FF] text-white shadow-sm"
+                        : "text-[#141414]/55 hover:text-[#141414] dark:text-white/45 dark:hover:text-white",
+                    )}
+                    title="Download all as a single ZIP archive"
+                    aria-pressed={downloadMode === "zip"}
+                  >
+                    <Archive className="size-3.5" aria-hidden />
+                    ZIP
+                  </button>
+                </div>
               )}
-            </Button>
+
+              <Button
+                size="lg"
+                variant="secondary"
+                disabled={isDownloading || completedCount === 0}
+                onClick={() => void handleDownload()}
+              >
+                {isDownloading ? (
+                  <>
+                    <Loader2 className="size-5 animate-spin" />
+                    {downloadButtonLabel()}
+                  </>
+                ) : (
+                  <>
+                    <Download className="size-5" />
+                    {downloadButtonLabel()}
+                  </>
+                )}
+              </Button>
+            </div>
+
             <Button
               size="lg"
               variant="outline"
-              disabled={
-                images.length === 0 || isCompressing || isDownloading
-              }
+              disabled={images.length === 0 || isCompressing || isDownloading}
               onClick={() => setPendingConfirm("reset")}
             >
               <RotateCcw className="size-5" aria-hidden />
@@ -620,7 +776,7 @@ export default function BatchCompressor() {
             </Button>
           </div>
 
-          {/* Summary chips */}
+          {/* ── Summary chips ────────────────────────────────────────────── */}
           <div className="mb-6 flex flex-wrap gap-2">
             <Badge variant="default">Done: {completedCount}</Badge>
             <Badge variant="warning">Pending: {pendingCount}</Badge>
@@ -629,94 +785,188 @@ export default function BatchCompressor() {
                 Errors: {errorCount}
               </Badge>
             )}
+            {totalPages > 1 && (
+              <Badge variant="outline" className="font-mono text-[10px]">
+                Page {safePage}/{totalPages} · {images.length} total
+              </Badge>
+            )}
           </div>
 
-          {/* Image grid */}
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-            {images.map((image, index) => (
-              <Card
-                key={image.id}
-                className="overflow-hidden border-black/6 transition-shadow hover:shadow-[0_12px_40px_-16px_rgba(24,86,255,0.2)] dark:border-white/10"
-              >
-                <CardContent className="p-3">
-                  {image.previewUrl && (
-                    <div className="relative mb-2 aspect-square w-full overflow-hidden rounded-xl bg-[#3A344E]/5 dark:bg-white/5">
-                      <Image
-                        src={image.previewUrl}
-                        alt={image.originalName}
-                        fill
-                        className="object-cover"
-                        sizes="(max-width: 768px) 50vw, 25vw"
-                        unoptimized
-                      />
-                      {image.status === "processing" && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-[#141414]/40 backdrop-blur-[2px]">
-                          <Loader2 className="size-8 animate-spin text-white" aria-hidden />
-                        </div>
-                      )}
-                      <button
-                        type="button"
-                        disabled={isCompressing || isDownloading}
-                        onClick={() => handleRemoveImage(image, index)}
-                        className={cn(
-                          "absolute right-2 top-2 flex size-9 items-center justify-center rounded-full border border-white/25 bg-[#141414]/55 text-white shadow-md backdrop-blur-sm transition",
-                          "hover:bg-[#EA2143]/90 hover:border-white/40",
-                          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80",
-                          (isCompressing || isDownloading) && "cursor-not-allowed opacity-40",
-                        )}
-                        aria-label={`Remove ${image.originalName}`}
-                      >
-                        <Trash2 className="size-4" aria-hidden />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setPreviewImageId(image.id)}
-                        className={cn(
-                          "absolute bottom-2 right-2 flex size-9 items-center justify-center rounded-full border border-white/25 bg-[#141414]/55 text-white shadow-md backdrop-blur-sm transition",
-                          "hover:bg-[#1856FF]/85 hover:border-white/40",
-                          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80",
-                        )}
-                        aria-label={`Preview ${image.originalName}`}
-                      >
-                        <Eye className="size-4" aria-hidden />
-                      </button>
-                    </div>
-                  )}
-                  <p className="truncate font-mono text-[10px] text-[#3A344E] dark:text-white/50">
-                    {image.originalName}
-                  </p>
-                  <p className="mt-1 text-xs text-[#141414]/60 dark:text-white/55">
-                    {formatBytes(image.size)}
-                    {image.compressedBlob && (
-                      <>
-                        {" → "}
-                        <span className="font-medium text-[#07CA6B]">
-                          {formatBytes(image.compressedBlob.size)}
-                        </span>
-                      </>
-                    )}
-                  </p>
-                  <p className="mt-1 text-xs">
-                    <span
-                      className={cn(
-                        "font-semibold",
-                        image.status === "completed" && "text-[#07CA6B]",
-                        image.status === "error" && "text-[#EA2143]",
-                        image.status === "processing" && "text-[#E89558]",
-                        image.status === "pending" && "text-[#141414]/55 dark:text-white/45",
-                      )}
+          {/* ── Image grid (paginated) ───────────────────────────────────── */}
+          {images.length > 0 && (
+            <>
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+                {pagedImages.map((image, localIndex) => {
+                  const globalIndex = (safePage - 1) * ITEMS_PER_PAGE + localIndex;
+                  return (
+                    <Card
+                      key={image.id}
+                      className="overflow-hidden border-black/6 transition-shadow hover:shadow-[0_12px_40px_-16px_rgba(24,86,255,0.2)] dark:border-white/10"
                     >
-                      {image.status}
-                    </span>
-                  </p>
-                  {image.error && (
-                    <p className="mt-1 text-xs text-[#EA2143]">{image.error}</p>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                      <CardContent className="p-3">
+                        {image.previewUrl && (
+                          <div className="relative mb-2 aspect-square w-full overflow-hidden rounded-xl bg-[#3A344E]/5 dark:bg-white/5">
+                            <Image
+                              src={image.previewUrl}
+                              alt={image.originalName}
+                              fill
+                              className="object-cover"
+                              sizes="(max-width: 768px) 50vw, 25vw"
+                              unoptimized
+                            />
+                            {image.status === "processing" && (
+                              <div className="absolute inset-0 flex items-center justify-center bg-[#141414]/40 backdrop-blur-[2px]">
+                                <Loader2
+                                  className="size-8 animate-spin text-white"
+                                  aria-hidden
+                                />
+                              </div>
+                            )}
+                            <button
+                              type="button"
+                              disabled={isCompressing || isDownloading}
+                              onClick={() => handleRemoveImage(image, globalIndex)}
+                              className={cn(
+                                "absolute right-2 top-2 flex size-9 items-center justify-center rounded-full border border-white/25 bg-[#141414]/55 text-white shadow-md backdrop-blur-sm transition",
+                                "hover:border-white/40 hover:bg-[#EA2143]/90",
+                                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80",
+                                (isCompressing || isDownloading) &&
+                                  "cursor-not-allowed opacity-40",
+                              )}
+                              aria-label={`Remove ${image.originalName}`}
+                            >
+                              <Trash2 className="size-4" aria-hidden />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setPreviewImageId(image.id)}
+                              className={cn(
+                                "absolute bottom-2 right-2 flex size-9 items-center justify-center rounded-full border border-white/25 bg-[#141414]/55 text-white shadow-md backdrop-blur-sm transition",
+                                "hover:border-white/40 hover:bg-[#1856FF]/85",
+                                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80",
+                              )}
+                              aria-label={`Preview ${image.originalName}`}
+                            >
+                              <Eye className="size-4" aria-hidden />
+                            </button>
+                          </div>
+                        )}
+                        <p className="truncate font-mono text-[10px] text-[#3A344E] dark:text-white/50">
+                          {image.originalName}
+                        </p>
+                        <p className="mt-1 text-xs text-[#141414]/60 dark:text-white/55">
+                          {formatBytes(image.size)}
+                          {image.compressedBlob && (
+                            <>
+                              {" → "}
+                              <span className="font-medium text-[#07CA6B]">
+                                {formatBytes(image.compressedBlob.size)}
+                              </span>
+                            </>
+                          )}
+                        </p>
+                        <p className="mt-1 text-xs">
+                          <span
+                            className={cn(
+                              "font-semibold",
+                              image.status === "completed" && "text-[#07CA6B]",
+                              image.status === "error" && "text-[#EA2143]",
+                              image.status === "processing" && "text-[#E89558]",
+                              image.status === "pending" &&
+                                "text-[#141414]/55 dark:text-white/45",
+                            )}
+                          >
+                            {image.status}
+                          </span>
+                        </p>
+                        {image.error && (
+                          <p className="mt-1 text-xs text-[#EA2143]">{image.error}</p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
 
+              {/* ── Pagination ─────────────────────────────────────────── */}
+              {totalPages > 1 && (
+                <div className="mt-8">
+                  <div className="flex items-center justify-center gap-1.5">
+                    {/* Prev */}
+                    <button
+                      type="button"
+                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      disabled={safePage === 1}
+                      className={cn(
+                        "flex size-9 items-center justify-center rounded-xl border border-black/8 bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] text-[#141414] transition dark:border-white/10 dark:text-white",
+                        "hover:border-[#1856FF]/40 hover:bg-[#1856FF]/8 hover:text-[#1856FF]",
+                        "disabled:cursor-not-allowed disabled:opacity-35",
+                      )}
+                      aria-label="Previous page"
+                    >
+                      <ChevronLeft className="size-4" aria-hidden />
+                    </button>
+
+                    {/* Page numbers */}
+                    {pageNumbers.map((page, i) =>
+                      page === "..." ? (
+                        <span
+                          key={`ellipsis-${i}`}
+                          className="flex size-9 items-center justify-center text-sm text-[#141414]/35 dark:text-white/35"
+                          aria-hidden
+                        >
+                          ···
+                        </span>
+                      ) : (
+                        <button
+                          key={page}
+                          type="button"
+                          onClick={() => setCurrentPage(page as number)}
+                          className={cn(
+                            "flex size-9 items-center justify-center rounded-xl border text-sm font-semibold transition",
+                            safePage === page
+                              ? "border-[#1856FF] bg-[#1856FF] text-white shadow-[0_4px_14px_-4px_rgba(24,86,255,0.55)]"
+                              : "border-black/8 bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] text-[#141414] hover:border-[#1856FF]/40 hover:bg-[#1856FF]/8 hover:text-[#1856FF] dark:border-white/10 dark:text-white",
+                          )}
+                          aria-label={`Go to page ${page}`}
+                          aria-current={safePage === page ? "page" : undefined}
+                        >
+                          {page}
+                        </button>
+                      ),
+                    )}
+
+                    {/* Next */}
+                    <button
+                      type="button"
+                      onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                      disabled={safePage === totalPages}
+                      className={cn(
+                        "flex size-9 items-center justify-center rounded-xl border border-black/8 bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] text-[#141414] transition dark:border-white/10 dark:text-white",
+                        "hover:border-[#1856FF]/40 hover:bg-[#1856FF]/8 hover:text-[#1856FF]",
+                        "disabled:cursor-not-allowed disabled:opacity-35",
+                      )}
+                      aria-label="Next page"
+                    >
+                      <ChevronRight className="size-4" aria-hidden />
+                    </button>
+                  </div>
+
+                  {/* Range label */}
+                  <p className="mt-2 text-center text-xs text-[#141414]/40 dark:text-white/35">
+                    Showing{" "}
+                    <span className="font-medium text-[#141414]/65 dark:text-white/55">
+                      {(safePage - 1) * ITEMS_PER_PAGE + 1}–
+                      {Math.min(safePage * ITEMS_PER_PAGE, images.length)}
+                    </span>{" "}
+                    of {images.length} images
+                  </p>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Empty state */}
           {images.length === 0 && (
             <p className="py-12 text-center text-sm text-[#141414]/50 dark:text-white/45">
               No images yet — upload to see stats and progress.

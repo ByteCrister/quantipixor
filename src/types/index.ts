@@ -74,6 +74,8 @@ export interface ImageCompressorActions {
     setAllowedFormats: (formats: string[]) => void;
     compressAll: () => Promise<void>;
     downloadAsZip: () => Promise<boolean>;
+    /** Download each completed image as a separate file (for ≤9 image queues). */
+    downloadIndividual: () => Promise<boolean>;
     resetStore: () => void;
 }
 

@@ -217,48 +217,108 @@ export const useImageCompressorStore = create<ImageCompressorStore>(
                 compressionProgress: { done: 0, total },
             });
 
+            // --- Parallel worker pool ---
+            // Safe because JS is single-threaded: queue.shift() and `done += 1`
+            // after each await never interleave with another worker's synchronous code.
+            const CONCURRENCY = 6;
+            const queue = [...pendingImages];
             let done = 0;
-            for (const image of pendingImages) {
-                try {
+
+            const worker = async () => {
+                while (queue.length > 0) {
+                    const image = queue.shift();
+                    if (!image) break;
+
+                    // Mark as processing
                     set((state) => ({
                         images: state.images.map((img) =>
                             img.id === image.id ? { ...img, status: 'processing' } : img
                         ),
                     }));
 
-                    const compressedBlob = await compressImage(image.file, config.quality);
-
-                    done += 1;
-                    set((state) => ({
-                        images: state.images.map((img) =>
-                            img.id === image.id
-                                ? {
-                                    ...img,
-                                    status: 'completed',
-                                    compressedBlob,
-                                }
-                                : img
-                        ),
-                        compressionProgress: { done, total },
-                    }));
-                } catch (error) {
-                    done += 1;
-                    set((state) => ({
-                        images: state.images.map((img) =>
-                            img.id === image.id
-                                ? {
-                                    ...img,
-                                    status: 'error',
-                                    error: error instanceof Error ? error.message : 'Compression failed',
-                                }
-                                : img
-                        ),
-                        compressionProgress: { done, total },
-                    }));
+                    try {
+                        const compressedBlob = await compressImage(image.file, config.quality);
+                        done += 1;
+                        set((state) => ({
+                            images: state.images.map((img) =>
+                                img.id === image.id
+                                    ? { ...img, status: 'completed', compressedBlob }
+                                    : img
+                            ),
+                            compressionProgress: { done, total },
+                        }));
+                    } catch (error) {
+                        done += 1;
+                        set((state) => ({
+                            images: state.images.map((img) =>
+                                img.id === image.id
+                                    ? {
+                                        ...img,
+                                        status: 'error',
+                                        error: error instanceof Error ? error.message : 'Compression failed',
+                                    }
+                                    : img
+                            ),
+                            compressionProgress: { done, total },
+                        }));
+                    }
                 }
-            }
+            };
+
+            // Spawn up to CONCURRENCY workers and wait for all to finish
+            await Promise.all(
+                Array.from({ length: Math.min(CONCURRENCY, total) }, worker)
+            );
 
             set({ isCompressing: false, compressionProgress: null });
+        },
+
+        downloadIndividual: async () => {
+            const { isDownloading, compressAll } = get();
+            if (isDownloading) return false;
+
+            const hasPending = get().images.some((img) => img.status === 'pending');
+            if (hasPending) {
+                await compressAll();
+            }
+
+            const { images, config } = get();
+            const completedImages = images.filter(
+                (img) => img.status === 'completed' && img.compressedBlob
+            );
+
+            if (completedImages.length === 0) return false;
+
+            set({ isDownloading: true });
+
+            try {
+                const baseName = config.baseName.trim() || 'image';
+                for (let idx = 0; idx < completedImages.length; idx++) {
+                    const img = completedImages[idx]!;
+                    const blob = img.compressedBlob!;
+                    const ext = mimeToOutputExtension(blob.type);
+                    // Use globalIdx (1-based) so file names are unique
+                    const fileName = `${baseName}-${idx + 1}.${ext}`;
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = fileName;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+                    // Small gap so browsers don't suppress subsequent downloads
+                    if (idx < completedImages.length - 1) {
+                        await new Promise<void>((res) => setTimeout(res, 200));
+                    }
+                }
+                return true;
+            } catch (error) {
+                console.error('Failed to download individual images:', error);
+                return false;
+            } finally {
+                set({ isDownloading: false });
+            }
         },
 
         downloadAsZip: async () => {

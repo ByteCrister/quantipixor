@@ -1,21 +1,25 @@
-import { MetadataRoute } from 'next'
+import { MetadataRoute } from "next";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = "https://quantipixor.vercel.app";
+  const domain =
+    process.env.NEXT_PUBLIC_DOMAIN?.replace(/\/$/, "") ||
+    "https://quantipixor.vercel.app";
 
   const routes = [
-    "",
-    "/image/converter",
-    "/image/remove-bg",
-    "/image/batch-compressor",
-    "/image/generate-favicon",
-    "/image/ocr-doc-formatter",
-    "/about",
-    "/help",
+    { path: "/", priority: 1.0 },
+    { path: "/image/converter", priority: 0.9 },
+    { path: "/image/remove-bg", priority: 0.9 },
+    { path: "/image/batch-compressor", priority: 0.9 },
+    { path: "/image/generate-favicon", priority: 0.8 },
+    { path: "/image/ocr-doc-formatter", priority: 0.8 },
+    { path: "/about", priority: 0.7 },
+    { path: "/help", priority: 0.7 },
   ];
 
   return routes.map((route) => ({
-    url: `${baseUrl}${route}`,
+    url: `${domain}${route.path}`,
     lastModified: new Date(),
+    changeFrequency: "monthly", // or "weekly" for frequently updated tools
+    priority: route.priority,
   }));
 }

@@ -6,10 +6,23 @@ export interface ValidationResult {
   error?: string;
 }
 
+/**
+ * Validates a single image file against the provided compression configuration.
+ *
+ * Checks:
+ * 1. Whether the file’s MIME type (detected via extension/magic bytes) is in the
+ *    allowed formats list.
+ * 2. Whether the file size does not exceed `config.maxFileSizeMB` megabytes.
+ *
+ * @param file - The image file to validate.
+ * @param config - Compression configuration containing allowed formats and size limit.
+ * @returns An object with `valid: boolean` and an optional `error` description.
+ */
 export function validateImage(file: File, config: CompressionConfig): ValidationResult {
   const allowed = new Set(config.allowedFormats);
   const effective = getEffectiveImageMime(file);
 
+  // If the effective MIME is null or not in the allowed set, the format is unsupported.
   if (!effective || !allowed.has(effective)) {
     return {
       valid: false,

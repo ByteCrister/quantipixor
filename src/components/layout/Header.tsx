@@ -1,10 +1,191 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { ImageIcon, Repeat, Eraser, Menu, X, FileText } from "lucide-react";
+import {
+  ImageIcon,
+  Repeat,
+  Eraser,
+  Menu,
+  X,
+  FileText,
+  ChevronDown,
+  Maximize2,
+  Layers,
+} from "lucide-react";
 import QuantipixorIcon from "@/components/global/QuantipixorIcon";
 import { cn } from "@/lib/utils";
+import { AnimatePresence, motion } from "framer-motion";
+
+// ─── More-menu items ──────────────────────────────────────────────────────────
+
+const MORE_ITEMS = [
+  {
+    label: "Image Resizer",
+    icon: <Maximize2 className="h-4 w-4" />,
+    route: "/image/resizer",
+    description: "Resize to exact dimensions",
+  },
+  {
+    label: "Converter",
+    icon: <Repeat className="h-4 w-4" />,
+    route: "/image/converter",
+    description: "Convert format or to Base64",
+  },
+  {
+    label: "Favicons",
+    icon: <ImageIcon className="h-4 w-4" />,
+    route: "/image/generate-favicon",
+    description: "Generate favicons for your site",
+  },
+  {
+    label: "Remove BG",
+    icon: <Eraser className="h-4 w-4" />,
+    route: "/image/remove-bg",
+    description: "Remove image backgrounds",
+  },
+  {
+    label: "OCR Formatter",
+    icon: <FileText className="h-4 w-4" />,
+    route: "/image/ocr-doc-formatter",
+    description: "Extract & format text from images",
+  },
+];
+
+// ─── More Dropdown ────────────────────────────────────────────────────────────
+
+function MoreDropdown({
+  onNavigate,
+}: {
+  onNavigate: (route: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  // Close on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    if (open) document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  // Close on Escape
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    if (open) document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="true"
+        aria-expanded={open}
+        className={cn(
+          "inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition-all",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1856FF]/40 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[#0c0b10]",
+          open
+            ? "border-[#1856FF]/50 bg-[#1856FF]/8 text-[#1856FF] dark:border-[#1856FF]/40 dark:bg-[#1856FF]/10 dark:text-blue-300"
+            : "border-black/20 bg-transparent text-foreground/80 hover:border-[#1856FF]/50 hover:bg-[#1856FF]/5 hover:text-[#1856FF] dark:border-white/20 dark:text-white/70 dark:hover:border-white/40 dark:hover:bg-white/5 dark:hover:text-white"
+        )}
+      >
+        <Layers className="h-4 w-4" />
+        <span>Tools</span>
+        <motion.span
+          animate={{ rotate: open ? 180 : 0 }}
+          transition={{ duration: 0.2, ease: "easeInOut" }}
+          className="flex items-center"
+        >
+          <ChevronDown className="h-3.5 w-3.5" />
+        </motion.span>
+      </button>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: 6, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 4, scale: 0.97 }}
+            transition={{ type: "spring", stiffness: 500, damping: 35 }}
+            className={cn(
+              "absolute right-0 top-full z-50 mt-2 w-64 origin-top-right overflow-hidden rounded-2xl border",
+              // Light
+              "bg-white/90 border-black/[0.08] shadow-[0_16px_48px_-12px_rgba(0,0,0,0.18),0_4px_16px_-4px_rgba(0,0,0,0.08)]",
+              // Dark
+              "dark:bg-[#0f1623]/95 dark:border-white/[0.08] dark:shadow-[0_16px_48px_-12px_rgba(0,0,0,0.6)]",
+              "backdrop-blur-2xl"
+            )}
+          >
+            {/* Top gloss */}
+            <div
+              className="pointer-events-none absolute inset-x-0 top-0 h-px"
+              style={{
+                background:
+                  "linear-gradient(90deg, transparent, rgba(255,255,255,0.6) 40%, rgba(255,255,255,0.6) 60%, transparent)",
+              }}
+            />
+
+            <div className="p-1.5">
+              {MORE_ITEMS.map((item) => (
+                <button
+                  key={item.route}
+                  type="button"
+                  onClick={() => {
+                    onNavigate(item.route);
+                    setOpen(false);
+                  }}
+                  className={cn(
+                    "group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-all duration-150",
+                    "text-foreground/80 hover:bg-[#1856FF]/6 hover:text-[#1856FF]",
+                    "dark:text-white/70 dark:hover:bg-white/[0.06] dark:hover:text-white",
+                    "focus-visible:outline-none focus-visible:bg-[#1856FF]/6"
+                  )}
+                >
+                  {/* Icon bubble */}
+                  <span
+                    className={cn(
+                      "flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg border transition-colors duration-150",
+                      "border-black/[0.08] bg-black/[0.03] text-foreground/60 group-hover:border-[#1856FF]/25 group-hover:bg-[#1856FF]/8 group-hover:text-[#1856FF]",
+                      "dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-white/50 dark:group-hover:border-[#1856FF]/30 dark:group-hover:bg-[#1856FF]/10 dark:group-hover:text-blue-300"
+                    )}
+                  >
+                    {item.icon}
+                  </span>
+
+                  <span className="flex min-w-0 flex-col">
+                    <span className="text-sm font-semibold leading-tight">{item.label}</span>
+                    <span className="text-[11px] font-normal text-foreground/45 group-hover:text-[#1856FF]/60 dark:text-white/35 dark:group-hover:text-blue-300/60">
+                      {item.description}
+                    </span>
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            {/* Bottom gloss */}
+            <div
+              className="pointer-events-none absolute inset-x-0 bottom-0 h-px"
+              style={{
+                background:
+                  "linear-gradient(90deg, transparent, rgba(0,0,0,0.06) 40%, rgba(0,0,0,0.06) 60%, transparent)",
+              }}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+// ─── Header ───────────────────────────────────────────────────────────────────
 
 const Header: React.FC = () => {
   const router = useRouter();
@@ -18,55 +199,13 @@ const Header: React.FC = () => {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Prevent body scroll when mobile menu is open
   useEffect(() => {
-    if (mobileMenuOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
-    };
+    document.body.style.overflow = mobileMenuOpen ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
   }, [mobileMenuOpen]);
 
-  const handleLogoClick = () => {
-    router.push("/");
-    setMobileMenuOpen(false);
-  };
-
-  const handleBatchCompressorClick = () => {
-    router.push("/image/batch-compressor");
-    setMobileMenuOpen(false);
-  };
-
-  const handleGenerateFaviconsClick = () => {
-    router.push("/image/generate-favicon");
-    setMobileMenuOpen(false);
-  };
-
-  const handleImageConverterClick = () => {
-    router.push("/image/converter");
-    setMobileMenuOpen(false);
-  };
-
-  const handleRemoveBgClick = () => {
-    router.push("/image/remove-bg");
-    setMobileMenuOpen(false);
-  };
-
-  const handleOcrDocFormatterClick = () => {
-    router.push("/image/ocr-doc-formatter");
-    setMobileMenuOpen(false);
-  };
-
-  const handleAboutClick = () => {
-    router.push("/about");
-    setMobileMenuOpen(false);
-  };
-
-  const handleHelpClick = () => {
-    router.push("/help");
+  const navigate = (route: string) => {
+    router.push(route);
     setMobileMenuOpen(false);
   };
 
@@ -88,7 +227,7 @@ const Header: React.FC = () => {
             : "border-black/6 shadow-[inset_0_1px_0_0_var(--glass-highlight)] dark:border-white/8",
         )}
       >
-        {/* Luminous edge (glass spec) */}
+        {/* Luminous bottom edge */}
         <div
           className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-linear-to-r from-transparent via-[#1856FF]/35 to-transparent dark:via-[#1856FF]/45"
           aria-hidden
@@ -96,12 +235,13 @@ const Header: React.FC = () => {
 
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex flex-wrap items-center justify-between gap-4 py-3.5 md:py-4">
-            {/* Logo / Brand */}
+
+            {/* ── Logo ── */}
             <button
               type="button"
-              onClick={handleLogoClick}
+              onClick={() => navigate("/")}
               className="group flex items-center gap-3 rounded-2xl pr-3 transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1856FF]/45 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[#0c0b10]"
-              aria-label="Scroll to top"
+              aria-label="Go to homepage"
             >
               <span className="relative">
                 <span
@@ -122,11 +262,12 @@ const Header: React.FC = () => {
               </span>
             </button>
 
-            {/* Desktop Navigation (hidden on mobile) */}
+            {/* ── Desktop Navigation ── */}
             <nav
-              className="hidden md:flex md:flex-wrap md:items-center md:justify-end md:gap-2"
+              className="hidden md:flex md:items-center md:gap-2"
               aria-label="Main navigation"
             >
+              {/* About / Help pill group */}
               <div
                 className="flex items-center gap-0.5 rounded-full border border-black/[0.07] bg-black/2 p-1 shadow-inner backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]"
                 role="group"
@@ -134,81 +275,39 @@ const Header: React.FC = () => {
               >
                 <button
                   type="button"
-                  onClick={handleAboutClick}
+                  onClick={() => navigate("/about")}
                   className={navPillBtn}
-                  aria-label="About Quantipixor"
                 >
                   About
                 </button>
                 <button
                   type="button"
-                  onClick={handleHelpClick}
+                  onClick={() => navigate("/help")}
                   className={navPillBtn}
-                  aria-label="Help and FAQ"
                 >
                   Help
                 </button>
               </div>
 
-              <button
-                type="button"
-                onClick={handleImageConverterClick}
-                className="inline-flex items-center justify-center gap-2 rounded-lg border border-black/20 bg-transparent px-3 py-2 text-sm font-medium text-foreground/80 transition-all hover:border-[#1856FF]/60 hover:bg-[#1856FF]/5 hover:text-[#1856FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1856FF]/40 focus-visible:ring-offset-2 dark:border-white/20 dark:text-white/70 dark:hover:border-white/40 dark:hover:bg-white/5 dark:hover:text-white dark:focus-visible:ring-offset-[#0c0b10]"
-                aria-label="Convert image format or to Base64"
-              >
-                <Repeat className="h-4 w-4" />
-                <span>Converter</span>
-              </button>
+              {/* Tools dropdown */}
+              <MoreDropdown onNavigate={navigate} />
 
+              {/* Primary CTA */}
               <button
                 type="button"
-                onClick={handleGenerateFaviconsClick}
-                className="inline-flex items-center justify-center gap-2 rounded-lg border border-black/20 bg-transparent px-3 py-2 text-sm font-medium text-foreground/80 transition-all hover:border-[#1856FF]/60 hover:bg-[#1856FF]/5 hover:text-[#1856FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1856FF]/40 focus-visible:ring-offset-2 dark:border-white/20 dark:text-white/70 dark:hover:border-white/40 dark:hover:bg-white/5 dark:hover:text-white dark:focus-visible:ring-offset-[#0c0b10]"
-                aria-label="Generate favicons for your website"
-              >
-                <ImageIcon className="h-4 w-4" />
-                <span>Favicons</span>
-              </button>
-
-              {/* Remove BG Button */}
-              <button
-                type="button"
-                onClick={handleRemoveBgClick}
-                className="inline-flex items-center justify-center gap-2 rounded-lg border border-black/20 bg-transparent px-3 py-2 text-sm font-medium text-foreground/80 transition-all hover:border-[#1856FF]/60 hover:bg-[#1856FF]/5 hover:text-[#1856FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1856FF]/40 focus-visible:ring-offset-2 dark:border-white/20 dark:text-white/70 dark:hover:border-white/40 dark:hover:bg-white/5 dark:hover:text-white dark:focus-visible:ring-offset-[#0c0b10]"
-                aria-label="Remove background from images"
-              >
-                <Eraser className="h-4 w-4" />
-                <span>Remove BG</span>
-              </button>
-
-              {/* OCR / Doc Formatter Button */}
-              <button
-                type="button"
-                onClick={handleOcrDocFormatterClick}
-                className="inline-flex items-center justify-center gap-2 rounded-lg border border-black/20 bg-transparent px-3 py-2 text-sm font-medium text-foreground/80 transition-all hover:border-[#1856FF]/60 hover:bg-[#1856FF]/5 hover:text-[#1856FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1856FF]/40 focus-visible:ring-offset-2 dark:border-white/20 dark:text-white/70 dark:hover:border-white/40 dark:hover:bg-white/5 dark:hover:text-white dark:focus-visible:ring-offset-[#0c0b10]"
-                aria-label="OCR document formatter"
-              >
-                <FileText className="h-4 w-4" />
-                <span>OCR Formatter</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={handleBatchCompressorClick}
+                onClick={() => navigate("/image/batch-compressor")}
                 className="inline-flex items-center justify-center rounded-full bg-[#1856FF] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_8px_28px_-6px_rgba(24,86,255,0.55)] ring-1 ring-white/20 transition-all hover:-translate-y-0.5 hover:bg-[#0E4ADB] hover:shadow-[0_14px_36px_-6px_rgba(24,86,255,0.65)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1856FF] focus-visible:ring-offset-2 active:translate-y-0 active:bg-[#0A3DB0] dark:ring-white/10 dark:focus-visible:ring-offset-[#0c0b10]"
-                aria-label="Open Batch Compressor (separate page)"
               >
                 Batch Compressor
               </button>
             </nav>
 
-            {/* Mobile Controls (visible only on mobile) */}
+            {/* ── Mobile Controls ── */}
             <div className="flex items-center gap-2 md:hidden">
               <button
                 type="button"
-                onClick={handleBatchCompressorClick}
+                onClick={() => navigate("/image/batch-compressor")}
                 className="inline-flex items-center justify-center rounded-full bg-[#1856FF] px-3 py-1.5 text-xs font-semibold text-white shadow-[0_8px_20px_-6px_rgba(24,86,255,0.45)] ring-1 ring-white/20 transition-all hover:bg-[#0E4ADB] active:bg-[#0A3DB0] dark:ring-white/10"
-                aria-label="Open Batch Compressor"
               >
                 Batch
               </button>
@@ -227,7 +326,7 @@ const Header: React.FC = () => {
         </div>
       </header>
 
-      {/* Mobile Drawer Menu */}
+      {/* ── Mobile Drawer ── */}
       <div
         className={cn(
           "fixed inset-0 z-50 transition-all duration-300 md:hidden",
@@ -243,15 +342,16 @@ const Header: React.FC = () => {
           onClick={() => setMobileMenuOpen(false)}
         />
 
-        {/* Drawer */}
+        {/* Drawer panel */}
         <div
           className={cn(
-            "absolute right-0 top-0 flex h-full w-80 flex-col bg-[color-mix(in_srgb,var(--surface)_98%,transparent)] backdrop-blur-2xl transition-transform duration-300 ease-out",
-            "border-l border-black/10 shadow-2xl dark:border-white/10 dark:bg-[color-mix(in_srgb,var(--surface)_95%,transparent)]",
+            "absolute right-0 top-0 flex h-full w-80 flex-col backdrop-blur-2xl transition-transform duration-300 ease-out",
+            "bg-[color-mix(in_srgb,var(--surface)_98%,transparent)] border-l border-black/10 shadow-2xl",
+            "dark:bg-[color-mix(in_srgb,var(--surface)_95%,transparent)] dark:border-white/10",
             mobileMenuOpen ? "translate-x-0" : "translate-x-full",
           )}
         >
-          {/* Drawer Header */}
+          {/* Drawer header */}
           <div className="flex items-center justify-between border-b border-black/10 p-4 dark:border-white/10">
             <div className="flex items-center gap-2">
               <QuantipixorIcon className="h-8 w-8" />
@@ -268,44 +368,34 @@ const Header: React.FC = () => {
             </button>
           </div>
 
-          {/* Drawer Navigation */}
-          <nav className="flex-1 space-y-1 p-4" aria-label="Mobile navigation">
-            <button onClick={handleAboutClick} className={mobileNavItem}>
-              About
-            </button>
-            <button onClick={handleHelpClick} className={mobileNavItem}>
-              Help
-            </button>
-            <button onClick={handleImageConverterClick} className={mobileNavItem}>
-              <span className="flex items-center gap-3">
-                <Repeat className="h-4 w-4" />
-                Converter
-              </span>
-            </button>
-            <button onClick={handleGenerateFaviconsClick} className={mobileNavItem}>
-              <span className="flex items-center gap-3">
-                <ImageIcon className="h-4 w-4" />
-                Favicons
-              </span>
-            </button>
-            <button onClick={handleRemoveBgClick} className={mobileNavItem}>
-              <span className="flex items-center gap-3">
-                <Eraser className="h-4 w-4" />
-                Remove BG
-              </span>
-            </button>
-            <button onClick={handleOcrDocFormatterClick} className={mobileNavItem}>
-              <span className="flex items-center gap-3">
-                <FileText className="h-4 w-4" />
-                OCR Formatter
-              </span>
-            </button>
+          {/* Drawer nav */}
+          <nav className="flex-1 space-y-1 overflow-y-auto p-4" aria-label="Mobile navigation">
+            <button onClick={() => navigate("/about")} className={mobileNavItem}>About</button>
+            <button onClick={() => navigate("/help")} className={mobileNavItem}>Help</button>
+
+            <div className="my-2 h-px bg-black/8 dark:bg-white/8" />
+
+            {MORE_ITEMS.map((item) => (
+              <button
+                key={item.route}
+                onClick={() => navigate(item.route)}
+                className={cn(mobileNavItem, "flex items-center gap-3")}
+              >
+                <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg border border-black/[0.08] bg-black/[0.03] text-foreground/60 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-white/50">
+                  {item.icon}
+                </span>
+                <span className="flex flex-col items-start">
+                  <span className="text-sm font-semibold leading-tight">{item.label}</span>
+                  <span className="text-[11px] text-foreground/45 dark:text-white/35">{item.description}</span>
+                </span>
+              </button>
+            ))}
           </nav>
 
-          {/* Drawer Footer / CTA (optional) */}
+          {/* Drawer footer */}
           <div className="border-t border-black/10 p-4 dark:border-white/10">
             <button
-              onClick={handleBatchCompressorClick}
+              onClick={() => navigate("/image/batch-compressor")}
               className="flex w-full items-center justify-center rounded-full bg-[#1856FF] px-4 py-3 text-sm font-semibold text-white shadow-[0_8px_28px_-6px_rgba(24,86,255,0.55)] transition-all hover:bg-[#0E4ADB] active:bg-[#0A3DB0]"
             >
               Batch Compressor

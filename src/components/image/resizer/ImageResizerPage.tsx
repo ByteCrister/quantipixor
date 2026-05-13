@@ -19,10 +19,12 @@ import {
     AlertTriangle,
     Info,
     Maximize2,
+    Sparkles,
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+
+// ─── Font variables (paths resolved externally) ───────────────────────────────
+// --font-plus-jakarta, --font-jetbrains-mono, --font-inter, --font-space-grotesk
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -87,27 +89,40 @@ function useToast() {
     return { toasts, addToast, removeToast };
 }
 
-const toastConfig: Record<ToastType, { icon: React.ReactNode; bg: string; border: string; text: string; iconColor: string }> = {
+const toastConfig: Record<
+    ToastType,
+    {
+        icon: React.ReactNode;
+        bg: string;
+        border: string;
+        text: string;
+        iconColor: string;
+        glow: string;
+    }
+> = {
     success: {
-        icon: <CheckCheck size={15} />,
-        bg: "bg-emerald-950/90",
-        border: "border-emerald-700/50",
+        icon: <CheckCheck size={14} />,
+        bg: "bg-emerald-950/80",
+        border: "border-emerald-500/30",
         text: "text-emerald-100",
         iconColor: "text-emerald-400",
+        glow: "shadow-[0_0_20px_rgba(16,185,129,0.15)]",
     },
     error: {
-        icon: <AlertTriangle size={15} />,
-        bg: "bg-red-950/90",
-        border: "border-red-700/50",
+        icon: <AlertTriangle size={14} />,
+        bg: "bg-red-950/80",
+        border: "border-red-500/30",
         text: "text-red-100",
         iconColor: "text-red-400",
+        glow: "shadow-[0_0_20px_rgba(239,68,68,0.15)]",
     },
     info: {
-        icon: <Info size={15} />,
-        bg: "bg-slate-900/90",
-        border: "border-indigo-700/50",
+        icon: <Info size={14} />,
+        bg: "bg-[#0a0e1a]/80",
+        border: "border-[#1856FF]/30",
         text: "text-slate-100",
-        iconColor: "text-indigo-400",
+        iconColor: "text-[#1856FF]",
+        glow: "shadow-[0_0_20px_rgba(24,86,255,0.15)]",
     },
 };
 
@@ -127,15 +142,23 @@ function ToastContainer({
                         <motion.div
                             key={toast.id}
                             layout
-                            initial={{ opacity: 0, y: 24, scale: 0.92 }}
+                            initial={{ opacity: 0, y: 24, scale: 0.88 }}
                             animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, x: 40, scale: 0.9 }}
-                            transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                            className={`pointer-events-auto flex items-center gap-2.5 px-4 py-3 rounded-xl border backdrop-blur-md shadow-xl ${cfg.bg} ${cfg.border} ${cfg.text} max-w-[320px] cursor-pointer`}
+                            exit={{ opacity: 0, x: 48, scale: 0.88 }}
+                            transition={{ type: "spring", stiffness: 420, damping: 32 }}
+                            className={cn(
+                                "pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-2xl border backdrop-blur-xl cursor-pointer max-w-[320px]",
+                                cfg.bg,
+                                cfg.border,
+                                cfg.text,
+                                cfg.glow
+                            )}
                             onClick={() => onRemove(toast.id)}
                         >
-                            <span className={`flex-shrink-0 ${cfg.iconColor}`}>{cfg.icon}</span>
-                            <span className="font-[family-name:var(--font-inter)] text-[13px] font-medium leading-snug">
+                            <span className={cn("flex-shrink-0", cfg.iconColor)}>{cfg.icon}</span>
+                            <span
+                                className="font-[family-name:var(--font-inter)] text-[13px] font-medium leading-snug"
+                            >
                                 {toast.message}
                             </span>
                         </motion.div>
@@ -148,18 +171,7 @@ function ToastContainer({
 
 // ─── Brand Icon ───────────────────────────────────────────────────────────────
 
-interface QuantipixorIconProps {
-    className?: string;
-    size?: number;
-    "aria-label"?: string;
-}
-
-function QuantipixorIcon({
-    className = "h-6 w-6",
-    size = 24,
-    "aria-label": ariaLabel,
-}: QuantipixorIconProps) {
-    const decorative = !ariaLabel;
+function QuantipixorIcon({ className = "h-6 w-6", size = 24 }: { className?: string; size?: number }) {
     return (
         <svg
             width={size}
@@ -167,9 +179,7 @@ function QuantipixorIcon({
             viewBox="0 0 24 24"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
-            aria-hidden={decorative ? true : undefined}
-            aria-label={ariaLabel}
-            role={decorative ? undefined : "img"}
+            aria-hidden
             className={className}
         >
             <path
@@ -179,12 +189,7 @@ function QuantipixorIcon({
                 strokeLinecap="round"
                 fill="none"
             />
-            <path
-                d="M19 18.5L22 21.5"
-                stroke="url(#qG1)"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-            />
+            <path d="M19 18.5L22 21.5" stroke="url(#qG1)" strokeWidth="2.5" strokeLinecap="round" />
             <circle cx="9.2" cy="9.2" r="1.3" fill="url(#qG1)" />
             <defs>
                 <linearGradient id="qG1" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -211,8 +216,7 @@ const helpers = {
         return new Promise((resolve, reject) => {
             const url = URL.createObjectURL(file);
             const img = new Image();
-            img.onload = () =>
-                resolve({ img, url, width: img.naturalWidth, height: img.naturalHeight });
+            img.onload = () => resolve({ img, url, width: img.naturalWidth, height: img.naturalHeight });
             img.onerror = () => reject(new Error("Failed to load image"));
             img.src = url;
         });
@@ -246,14 +250,8 @@ const helpers = {
         return canvas;
     },
 
-    canvasToBlob(
-        canvas: HTMLCanvasElement,
-        mimeType: string = "image/png",
-        quality: number = 0.92
-    ): Promise<Blob> {
-        return new Promise((resolve) =>
-            canvas.toBlob((blob) => resolve(blob!), mimeType, quality)
-        );
+    canvasToBlob(canvas: HTMLCanvasElement, mimeType = "image/png", quality = 0.92): Promise<Blob> {
+        return new Promise((resolve) => canvas.toBlob((blob) => resolve(blob!), mimeType, quality));
     },
 
     downloadBlob(blob: Blob, filename: string): void {
@@ -293,12 +291,44 @@ const PRESETS: Preset[] = [
 function AnimatedNumber({ value }: { value: number }) {
     const spring = useSpring(value, { stiffness: 300, damping: 30 });
     const display = useTransform(spring, (v) => Math.round(v).toString());
-
-    useEffect(() => {
-        spring.set(value);
-    }, [value, spring]);
-
+    useEffect(() => { spring.set(value); }, [value, spring]);
     return <motion.span>{display}</motion.span>;
+}
+
+// ─── Glass Panel ──────────────────────────────────────────────────────────────
+
+function GlassPanel({
+    children,
+    className,
+    luminous,
+}: {
+    children: React.ReactNode;
+    className?: string;
+    luminous?: boolean;
+}) {
+    return (
+        <div
+            className={cn(
+                "relative rounded-3xl border backdrop-blur-xl overflow-hidden",
+                // Light mode
+                "bg-white/60 border-white/70 shadow-[0_8px_32px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.9)]",
+                // Dark mode
+                "dark:bg-white/[0.04] dark:border-white/[0.08] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.06)]",
+                luminous && "dark:shadow-[0_8px_40px_rgba(24,86,255,0.12),inset_0_1px_0_rgba(255,255,255,0.06)]",
+                className
+            )}
+        >
+            {/* Inner gloss shine */}
+            <div
+                className="pointer-events-none absolute inset-0 rounded-3xl"
+                style={{
+                    background:
+                        "linear-gradient(135deg, rgba(255,255,255,0.18) 0%, transparent 50%, rgba(255,255,255,0.04) 100%)",
+                }}
+            />
+            {children}
+        </div>
+    );
 }
 
 // ─── DropZone ─────────────────────────────────────────────────────────────────
@@ -317,9 +347,7 @@ function DropZone({ onFiles, disabled }: DropZoneProps) {
             e.preventDefault();
             setDragging(false);
             if (disabled) return;
-            const files = Array.from(e.dataTransfer.files).filter((f) =>
-                f.type.startsWith("image/")
-            );
+            const files = Array.from(e.dataTransfer.files).filter((f) => f.type.startsWith("image/"));
             if (files.length) onFiles(files);
         },
         [disabled, onFiles]
@@ -332,19 +360,40 @@ function DropZone({ onFiles, disabled }: DropZoneProps) {
     };
 
     const inputId = "resizer-file-upload";
+
     return (
         <div
             onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
             onDragLeave={() => setDragging(false)}
             onDrop={handleDrop}
             className={cn(
-                "relative rounded-3xl border-2 border-dashed p-8 text-center transition-all",
+                "relative rounded-3xl border-2 border-dashed p-10 text-center transition-all duration-300 overflow-hidden",
                 dragging
-                    ? "border-[#1856FF] bg-[#1856FF]/8 shadow-[0_0_0_4px_rgba(24,86,255,0.12)]"
-                    : "border-[#3A344E]/20 bg-[color-mix(in_srgb,var(--surface)_85%,transparent)] backdrop-blur-md dark:border-white/10",
-                disabled ? "opacity-50 cursor-not-allowed" : "",
+                    ? [
+                        "border-[#1856FF]/60",
+                        "bg-[#1856FF]/5 dark:bg-[#1856FF]/10",
+                        "shadow-[0_0_0_4px_rgba(24,86,255,0.1),inset_0_0_60px_rgba(24,86,255,0.06)]",
+                    ].join(" ")
+                    : [
+                        "border-slate-300/60 dark:border-white/10",
+                        "bg-white/40 dark:bg-white/[0.02]",
+                        "backdrop-blur-xl",
+                        "shadow-[0_4px_24px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,0.8)] dark:shadow-[0_4px_24px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.04)]",
+                    ].join(" "),
+                disabled ? "opacity-50 cursor-not-allowed" : "hover:border-[#1856FF]/40 dark:hover:border-[#1856FF]/30"
             )}
         >
+            {/* Ambient glow orb */}
+            <div
+                className={cn(
+                    "absolute inset-0 pointer-events-none transition-opacity duration-500",
+                    dragging ? "opacity-100" : "opacity-0"
+                )}
+                style={{
+                    background: "radial-gradient(ellipse 60% 40% at 50% 50%, rgba(24,86,255,0.08), transparent)",
+                }}
+            />
+
             <input
                 ref={inputRef}
                 id={inputId}
@@ -355,19 +404,46 @@ function DropZone({ onFiles, disabled }: DropZoneProps) {
                 onChange={handleChange}
                 disabled={disabled}
             />
-            <CloudUpload
-                className="mx-auto size-12 text-[#1856FF] opacity-90"
-                strokeWidth={1.25}
-                aria-hidden
-            />
-            <label htmlFor={inputId} className={cn("mt-4 block", disabled ? "cursor-not-allowed" : "cursor-pointer")}>
-                <span className="inline-flex items-center justify-center rounded-full bg-[#1856FF] px-6 py-2.5 text-sm font-semibold text-white shadow-[0_10px_28px_-6px_rgba(24,86,255,0.55)] ring-1 ring-white/20 transition hover:bg-[#0E4ADB] dark:ring-white/10">
-                    Choose images
-                </span>
-            </label>
-            <p className="mt-3 text-sm text-[#141414]/65 dark:text-white/55">
-                Drag and drop or browse · PNG, JPG, WebP, GIF · Max 8000 × 8000 px
-            </p>
+
+            <motion.div
+                animate={dragging ? { scale: 1.1, y: -4 } : { scale: 1, y: 0 }}
+                transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                className="relative"
+            >
+                {/* Icon with glass bubble */}
+                <div className="mx-auto mb-5 w-16 h-16 rounded-2xl flex items-center justify-center relative">
+                    <div
+                        className="absolute inset-0 rounded-2xl border border-white/60 dark:border-white/10"
+                        style={{
+                            background: "linear-gradient(135deg, rgba(24,86,255,0.12), rgba(147,51,234,0.08))",
+                            backdropFilter: "blur(12px)",
+                            boxShadow: "0 8px 32px rgba(24,86,255,0.2), inset 0 1px 0 rgba(255,255,255,0.5)",
+                        }}
+                    />
+                    <CloudUpload className="relative z-10 text-[#1856FF]" size={28} strokeWidth={1.5} aria-hidden />
+                </div>
+
+                <label htmlFor={inputId} className={cn("block", disabled ? "cursor-not-allowed" : "cursor-pointer")}>
+                    <span
+                        className="inline-flex items-center gap-2 rounded-2xl px-7 py-3 text-sm font-bold text-white cursor-pointer select-none"
+                        style={{
+                            background: "linear-gradient(135deg, #1856FF 0%, #7C3AED 100%)",
+                            boxShadow: "0 4px 24px rgba(24,86,255,0.4), 0 1px 0 rgba(255,255,255,0.2) inset",
+                        }}
+                    >
+                        <Sparkles size={14} />
+                        Choose images
+                    </span>
+                </label>
+
+                <p className="mt-4 font-[family-name:var(--font-inter)] text-[13px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                    Drag and drop or browse
+                    <span className="mx-2 text-slate-300 dark:text-white/20">·</span>
+                    PNG, JPG, WebP, GIF
+                    <span className="mx-2 text-slate-300 dark:text-white/20">·</span>
+                    Max 8000 × 8000 px
+                </p>
+            </motion.div>
         </div>
     );
 }
@@ -383,27 +459,32 @@ interface DimensionInputProps {
 
 function DimensionInput({ label, value, onChange, error }: DimensionInputProps) {
     const [focused, setFocused] = useState(false);
+
     return (
         <div className="flex-1 min-w-0">
-            <label className="block font-[family-name:var(--font-space-grotesk)] text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-widest uppercase mb-1.5">
+            <label className="block font-[family-name:var(--font-space-grotesk)] text-[10px] font-bold tracking-widest uppercase mb-1.5 text-slate-500 dark:text-slate-500">
                 {label}
             </label>
             <motion.div
                 animate={{
                     boxShadow: focused
-                        ? "0 0 0 3px rgba(59,130,246,0.12)"
+                        ? "0 0 0 3px rgba(24,86,255,0.15), 0 0 20px rgba(24,86,255,0.1)"
                         : error
-                            ? "0 0 0 3px rgba(248,113,113,0.1)"
+                            ? "0 0 0 3px rgba(234,33,67,0.15)"
                             : "0 0 0 0px transparent",
                 }}
-                className={[
-                    "flex items-center border rounded-xl bg-slate-50 dark:bg-[#151E2E] overflow-hidden transition-colors duration-150",
+                className={cn(
+                    "flex items-center rounded-2xl overflow-hidden border backdrop-blur-xl transition-colors duration-150",
+                    // Light
+                    "bg-white/70 border-slate-200/80",
+                    // Dark
+                    "dark:bg-white/[0.05] dark:border-white/[0.1]",
                     focused
-                        ? "border-blue-500"
+                        ? "border-[#1856FF]/60 dark:border-[#1856FF]/40"
                         : error
-                            ? "border-red-400 dark:border-red-500"
-                            : "border-slate-200 dark:border-[#1E2D45]",
-                ].join(" ")}
+                            ? "border-[#EA2143]/50"
+                            : "hover:border-slate-300 dark:hover:border-white/20"
+                )}
             >
                 <input
                     type="number"
@@ -413,9 +494,9 @@ function DimensionInput({ label, value, onChange, error }: DimensionInputProps) 
                     onChange={(e) => onChange(e.target.value)}
                     onFocus={() => setFocused(true)}
                     onBlur={() => setFocused(false)}
-                    className="font-[family-name:var(--font-jetbrains-mono)] flex-1 border-none outline-none bg-transparent text-slate-900 dark:text-slate-100 text-base sm:text-lg font-semibold px-3 sm:px-3.5 py-2.5 w-full [appearance:textfield] [&::-webkit-outer-spin-button]:opacity-30 [&::-webkit-inner-spin-button]:opacity-30"
+                    className="font-[family-name:var(--font-jetbrains-mono)] flex-1 border-none outline-none bg-transparent text-slate-900 dark:text-white text-lg font-semibold px-4 py-3 w-full [appearance:textfield] [&::-webkit-outer-spin-button]:opacity-30 [&::-webkit-inner-spin-button]:opacity-30"
                 />
-                <span className="font-[family-name:var(--font-space-grotesk)] text-[11px] font-bold text-slate-400 dark:text-slate-500 pr-3 tracking-wide">
+                <span className="font-[family-name:var(--font-space-grotesk)] text-[11px] font-bold text-slate-400 dark:text-slate-500 pr-3.5 tracking-wide">
                     px
                 </span>
             </motion.div>
@@ -425,94 +506,132 @@ function DimensionInput({ label, value, onChange, error }: DimensionInputProps) 
 
 // ─── PresetCard ───────────────────────────────────────────────────────────────
 
-interface PresetCardProps {
+function PresetCard({
+    label,
+    sub,
+    w,
+    h,
+    onClick,
+    active,
+}: {
     label: string;
     sub: string;
     w: number;
     h: number;
     onClick: (w: number, h: number) => void;
     active: boolean;
-}
-
-function PresetCard({ label, sub, w, h, onClick, active }: PresetCardProps) {
+}) {
     return (
         <motion.button
             onClick={() => onClick(w, h)}
-            whileHover={{ y: -1 }}
-            whileTap={{ scale: 0.96 }}
+            whileHover={{ y: -2, scale: 1.02 }}
+            whileTap={{ scale: 0.95 }}
             transition={{ type: "spring", stiffness: 500, damping: 30 }}
-            className={[
-                "px-1.5 sm:px-2 py-2 sm:py-2.5 rounded-xl border text-center flex flex-col items-center gap-0.5 cursor-pointer transition-colors duration-150 w-full",
+            className={cn(
+                "px-2 py-2.5 rounded-2xl border text-center flex flex-col items-center gap-1 cursor-pointer w-full transition-all duration-200",
                 active
-                    ? "border-blue-500 dark:border-blue-600 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 ring-[3px] ring-blue-500/10 dark:ring-blue-500/20"
-                    : "border-slate-200 dark:border-[#1E2D45] bg-white dark:bg-[#0F1623] hover:border-blue-300 dark:hover:border-blue-800 hover:bg-slate-50 dark:hover:bg-[#151E2E]",
-            ].join(" ")}
+                    ? [
+                        "border-[#1856FF]/40 dark:border-[#1856FF]/30",
+                        "shadow-[0_0_20px_rgba(24,86,255,0.15),inset_0_1px_0_rgba(255,255,255,0.5)]",
+                        "dark:shadow-[0_0_20px_rgba(24,86,255,0.2),inset_0_1px_0_rgba(255,255,255,0.06)]",
+                    ].join(" ")
+                    : [
+                        "border-slate-200/60 dark:border-white/[0.07]",
+                        "bg-white/50 dark:bg-white/[0.03]",
+                        "backdrop-blur-md",
+                        "hover:border-[#1856FF]/30 dark:hover:border-[#1856FF]/20",
+                        "hover:bg-white/70 dark:hover:bg-white/[0.06]",
+                    ].join(" ")
+            )}
+            style={
+                active
+                    ? {
+                        background:
+                            "linear-gradient(135deg, rgba(24,86,255,0.12) 0%, rgba(147,51,234,0.08) 100%)",
+                        backdropFilter: "blur(16px)",
+                    }
+                    : {}
+            }
         >
             <span
-                className={[
+                className={cn(
                     "font-[family-name:var(--font-plus-jakarta)] text-[10px] sm:text-[11px] font-bold block leading-tight",
                     active
-                        ? "bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"
-                        : "text-slate-700 dark:text-slate-200",
-                ].join(" ")}
+                        ? "bg-gradient-to-r from-[#1856FF] to-[#9333EA] bg-clip-text text-transparent"
+                        : "text-slate-700 dark:text-slate-200"
+                )}
             >
                 {label}
             </span>
-            <span className="font-[family-name:var(--font-jetbrains-mono)] text-[8px] sm:text-[9px] text-slate-400 dark:text-slate-500 font-medium block leading-tight">
+            <span className="font-[family-name:var(--font-jetbrains-mono)] text-[8px] sm:text-[9px] text-slate-400 dark:text-slate-500 font-medium block">
                 {sub}
             </span>
         </motion.button>
     );
 }
 
-// ─── ImageCard ────────────────────────────────────────────────────────────────
-
-interface ImageCardProps {
-    item: ImageItem;
-    onRemove: (id: string) => void;
-}
+// ─── Image Card ───────────────────────────────────────────────────────────────
 
 const statusConfig: Record<
     ImageStatus,
-    { label: string; badgeCls: string; cardBorderCls: string }
+    {
+        label: string;
+        badgeCls: string;
+        borderStyle: React.CSSProperties;
+        borderClass: string;
+        glowClass: string;
+    }
 > = {
     idle: {
         label: "Ready",
-        badgeCls:
-            "bg-slate-100 dark:bg-[#151E2E] text-slate-400 dark:text-slate-500 border border-slate-200 dark:border-[#1E2D45]",
-        cardBorderCls: "border-slate-200 dark:border-[#1E2D45]",
+        badgeCls: "text-slate-400 dark:text-slate-500 border-slate-200/60 dark:border-white/[0.08] bg-white/50 dark:bg-white/[0.04]",
+        borderClass: "border-slate-200/60 dark:border-white/[0.07]",
+        borderStyle: {},
+        glowClass: "",
     },
     processing: {
         label: "Resizing…",
-        badgeCls: "bg-amber-50 dark:bg-amber-900/20 text-amber-500",
-        cardBorderCls: "border-amber-200 dark:border-amber-800/40",
+        badgeCls: "text-amber-500 border-amber-400/30 bg-amber-50/80 dark:bg-amber-900/20",
+        borderClass: "border-amber-300/40 dark:border-amber-500/20",
+        borderStyle: {},
+        glowClass: "shadow-[0_0_20px_rgba(245,158,11,0.08)]",
     },
     done: {
         label: "Done",
-        badgeCls: "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400",
-        cardBorderCls: "border-emerald-200 dark:border-emerald-800/40",
+        badgeCls: "text-emerald-600 dark:text-emerald-400 border-emerald-400/30 bg-emerald-50/80 dark:bg-emerald-900/20",
+        borderClass: "border-emerald-300/50 dark:border-emerald-500/20",
+        borderStyle: {},
+        glowClass: "shadow-[0_0_20px_rgba(16,185,129,0.08)]",
     },
     error: {
         label: "Failed",
-        badgeCls: "bg-red-50 dark:bg-red-900/10 text-red-400",
-        cardBorderCls: "border-red-200 dark:border-red-800/30",
+        badgeCls: "text-[#EA2143] border-red-400/30 bg-red-50/80 dark:bg-red-900/10",
+        borderClass: "border-red-300/40 dark:border-red-500/20",
+        borderStyle: {},
+        glowClass: "shadow-[0_0_20px_rgba(234,33,67,0.08)]",
     },
 };
 
-function ImageCard({ item, onRemove }: ImageCardProps) {
+function ImageCard({ item, onRemove }: { item: ImageItem; onRemove: (id: string) => void }) {
     const s = statusConfig[item.status];
 
     return (
         <motion.div
             layout
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, y: 8, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, x: -20, height: 0, marginBottom: 0 }}
             transition={{ type: "spring", stiffness: 400, damping: 30 }}
-            className={`flex items-center gap-2.5 sm:gap-3 px-3 sm:px-3.5 py-2.5 rounded-xl border bg-white dark:bg-[#0F1623] transition-colors duration-200 ${s.cardBorderCls}`}
+            className={cn(
+                "flex items-center gap-3 px-3.5 py-3 rounded-2xl border backdrop-blur-xl transition-all duration-200",
+                "bg-white/60 dark:bg-white/[0.04]",
+                "shadow-[0_2px_12px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,0.8)] dark:shadow-[0_2px_12px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.05)]",
+                s.borderClass,
+                s.glowClass
+            )}
         >
             {/* Thumbnail */}
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg overflow-hidden flex-shrink-0 bg-black relative flex items-center justify-center">
+            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl overflow-hidden flex-shrink-0 bg-black relative flex items-center justify-center border border-white/20">
                 {item.previewUrl ? (
                     <img src={item.previewUrl} alt="" className="w-full h-full object-cover" />
                 ) : (
@@ -524,7 +643,7 @@ function ImageCard({ item, onRemove }: ImageCardProps) {
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            className="absolute inset-0 bg-black/55 flex items-center justify-center text-white"
+                            className="absolute inset-0 bg-black/60 flex items-center justify-center text-white backdrop-blur-sm"
                         >
                             <RefreshCw size={14} className="animate-spin" />
                         </motion.div>
@@ -535,7 +654,7 @@ function ImageCard({ item, onRemove }: ImageCardProps) {
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0 }}
                             transition={{ type: "spring", stiffness: 500, damping: 25 }}
-                            className="absolute inset-0 bg-emerald-500/70 flex items-center justify-center text-white"
+                            className="absolute inset-0 bg-emerald-500/75 backdrop-blur-sm flex items-center justify-center text-white"
                         >
                             <CheckCircle2 size={14} />
                         </motion.div>
@@ -552,34 +671,44 @@ function ImageCard({ item, onRemove }: ImageCardProps) {
                     {item.originalW}×{item.originalH}
                     {item.targetW != null && (
                         <>
-                            <span className="text-indigo-400 mx-1">→</span>
+                            <span className="text-[#1856FF] mx-1">→</span>
                             {item.targetW}×{item.targetH}
                         </>
                     )}
-                    <span className="mx-1 text-slate-300 dark:text-slate-600">·</span>
+                    <span className="mx-1.5 text-slate-300 dark:text-white/10">·</span>
                     {helpers.formatBytes(item.file.size)}
                 </p>
             </div>
 
-            {/* Status badge — hidden on small screens */}
+            {/* Badge */}
             <span
-                className={`hidden sm:inline-flex font-[family-name:var(--font-space-grotesk)] text-[10px] font-bold px-2.5 py-1 rounded-full tracking-wide flex-shrink-0 ${s.badgeCls}`}
+                className={cn(
+                    "hidden sm:inline-flex font-[family-name:var(--font-space-grotesk)] text-[10px] font-bold px-2.5 py-1 rounded-full tracking-wide border flex-shrink-0",
+                    s.badgeCls
+                )}
             >
                 {s.label}
             </span>
 
             {/* Actions */}
-            <div className="flex items-center gap-1 flex-shrink-0">
+            <div className="flex items-center gap-1.5 flex-shrink-0">
                 <AnimatePresence>
                     {item.status === "done" && item.resultBlob && (
                         <motion.button
-                            initial={{ opacity: 0, scale: 0.7 }}
+                            initial={{ opacity: 0, scale: 0.6 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.7 }}
-                            whileHover={{ scale: 1.08 }}
-                            whileTap={{ scale: 0.94 }}
+                            exit={{ opacity: 0, scale: 0.6 }}
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.92 }}
                             transition={{ type: "spring", stiffness: 500, damping: 25 }}
-                            className="w-8 h-8 flex items-center justify-center rounded-lg border border-emerald-200 dark:border-emerald-800/40 bg-emerald-50/50 dark:bg-[#151E2E] text-emerald-500 hover:bg-emerald-100 dark:hover:bg-emerald-900/20 transition-colors duration-150 cursor-pointer"
+                            className={cn(
+                                "w-8 h-8 flex items-center justify-center rounded-xl border cursor-pointer backdrop-blur-xl transition-all duration-150",
+                                "text-emerald-600 dark:text-emerald-400",
+                                "border-emerald-300/50 dark:border-emerald-500/20",
+                                "bg-emerald-50/80 dark:bg-emerald-900/20",
+                                "hover:bg-emerald-100 dark:hover:bg-emerald-900/30",
+                                "shadow-[0_0_12px_rgba(16,185,129,0.15)]"
+                            )}
                             onClick={() =>
                                 helpers.downloadBlob(
                                     item.resultBlob!,
@@ -588,19 +717,26 @@ function ImageCard({ item, onRemove }: ImageCardProps) {
                             }
                             title="Download resized image"
                         >
-                            <Download size={14} />
+                            <Download size={13} />
                         </motion.button>
                     )}
                 </AnimatePresence>
                 {item.status !== "processing" && (
                     <motion.button
-                        whileHover={{ scale: 1.08 }}
-                        whileTap={{ scale: 0.92 }}
-                        className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-[#1E2D45] bg-slate-50 dark:bg-[#151E2E] text-slate-400 hover:text-red-400 hover:border-red-200 dark:hover:border-red-800/40 hover:bg-red-50 dark:hover:bg-red-900/10 transition-all duration-150 cursor-pointer"
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        className={cn(
+                            "w-8 h-8 flex items-center justify-center rounded-xl border cursor-pointer backdrop-blur-xl transition-all duration-150",
+                            "text-slate-400 dark:text-slate-500",
+                            "border-slate-200/60 dark:border-white/[0.08]",
+                            "bg-white/50 dark:bg-white/[0.03]",
+                            "hover:text-[#EA2143] hover:border-red-300/50 dark:hover:border-red-500/20 hover:bg-red-50/80 dark:hover:bg-red-900/10",
+                            "hover:shadow-[0_0_12px_rgba(234,33,67,0.12)]"
+                        )}
                         onClick={() => onRemove(item.id)}
                         title="Remove"
                     >
-                        <X size={14} />
+                        <X size={13} />
                     </motion.button>
                 )}
             </div>
@@ -610,24 +746,29 @@ function ImageCard({ item, onRemove }: ImageCardProps) {
 
 // ─── Progress Bar ─────────────────────────────────────────────────────────────
 
-interface ProgressBarProps {
-    done: number;
-    total: number;
-}
-
-function ProgressBar({ done, total }: ProgressBarProps) {
+function ProgressBar({ done, total }: { done: number; total: number }) {
     const pct = total === 0 ? 0 : Math.round((done / total) * 100);
     return (
         <div className="flex items-center gap-3">
-            <div className="flex-1 h-1 rounded-full bg-slate-200 dark:bg-[#1E2D45] overflow-hidden">
+            <div
+                className="flex-1 h-1.5 rounded-full overflow-hidden"
+                style={{
+                    background: "rgba(148,163,184,0.15)",
+                    boxShadow: "inset 0 1px 3px rgba(0,0,0,0.1)",
+                }}
+            >
                 <motion.div
-                    className="h-full bg-gradient-to-r from-blue-600 to-purple-600 rounded-full"
+                    className="h-full rounded-full"
                     initial={{ width: "0%" }}
                     animate={{ width: `${pct}%` }}
                     transition={{ duration: 0.4, ease: "easeOut" }}
+                    style={{
+                        background: "linear-gradient(90deg, #1856FF, #9333EA)",
+                        boxShadow: "0 0 8px rgba(24,86,255,0.4)",
+                    }}
                 />
             </div>
-            <span className="font-[family-name:var(--font-jetbrains-mono)] text-[11px] font-semibold text-indigo-400 min-w-[34px] text-right">
+            <span className="font-[family-name:var(--font-jetbrains-mono)] text-[11px] font-semibold text-[#1856FF] dark:text-blue-400 min-w-[34px] text-right">
                 {pct}%
             </span>
         </div>
@@ -650,33 +791,36 @@ export default function ImageResizerPage() {
     const widthValid = helpers.validateDimension(width);
     const heightValid = helpers.validateDimension(height);
 
-    const handleFiles = useCallback(async (files: File[]) => {
-        const newItems = await Promise.all(
-            files.map(async (file): Promise<ImageItem | null> => {
-                try {
-                    const { width: w, height: h } = await helpers.loadImageFromFile(file);
-                    return {
-                        id: crypto.randomUUID(),
-                        file,
-                        previewUrl: URL.createObjectURL(file),
-                        originalW: w,
-                        originalH: h,
-                        status: "idle" as ImageStatus,
-                        resultBlob: null,
-                        targetW: null,
-                        targetH: null,
-                    };
-                } catch {
-                    return null;
-                }
-            })
-        );
-        const valid = newItems.filter((item): item is ImageItem => item !== null);
-        setItems((prev) => [...prev, ...valid]);
-        if (valid.length > 0) {
-            addToast("info", `${valid.length} image${valid.length !== 1 ? "s" : ""} added`);
-        }
-    }, [addToast]);
+    const handleFiles = useCallback(
+        async (files: File[]) => {
+            const newItems = await Promise.all(
+                files.map(async (file): Promise<ImageItem | null> => {
+                    try {
+                        const { width: w, height: h } = await helpers.loadImageFromFile(file);
+                        return {
+                            id: crypto.randomUUID(),
+                            file,
+                            previewUrl: URL.createObjectURL(file),
+                            originalW: w,
+                            originalH: h,
+                            status: "idle",
+                            resultBlob: null,
+                            targetW: null,
+                            targetH: null,
+                        };
+                    } catch {
+                        return null;
+                    }
+                })
+            );
+            const valid = newItems.filter((i): i is ImageItem => i !== null);
+            setItems((prev) => [...prev, ...valid]);
+            if (valid.length > 0) {
+                addToast("info", `${valid.length} image${valid.length !== 1 ? "s" : ""} added`);
+            }
+        },
+        [addToast]
+    );
 
     const handleWidthChange = (val: string) => {
         setWidth(val);
@@ -724,9 +868,7 @@ export default function ImageResizerPage() {
         for (const item of items) {
             if (item.status === "done") continue;
             setItems((prev) =>
-                prev.map((i) =>
-                    i.id === item.id ? { ...i, status: "processing" as ImageStatus } : i
-                )
+                prev.map((i) => (i.id === item.id ? { ...i, status: "processing" } : i))
             );
             try {
                 const { img } = await helpers.loadImageFromFile(item.file);
@@ -734,43 +876,30 @@ export default function ImageResizerPage() {
                 const blob = await helpers.canvasToBlob(canvas);
                 setItems((prev) =>
                     prev.map((i) =>
-                        i.id === item.id
-                            ? { ...i, status: "done" as ImageStatus, resultBlob: blob, targetW, targetH }
-                            : i
+                        i.id === item.id ? { ...i, status: "done", resultBlob: blob, targetW, targetH } : i
                     )
                 );
                 successCount++;
             } catch {
                 setItems((prev) =>
-                    prev.map((i) =>
-                        i.id === item.id ? { ...i, status: "error" as ImageStatus } : i
-                    )
+                    prev.map((i) => (i.id === item.id ? { ...i, status: "error" } : i))
                 );
                 errorCount++;
             }
         }
 
         setProcessing(false);
-
-        if (successCount > 0) {
-            addToast(
-                "success",
-                `${successCount} image${successCount !== 1 ? "s" : ""} resized to ${targetW}×${targetH}`
-            );
-        }
-        if (errorCount > 0) {
+        if (successCount > 0)
+            addToast("success", `${successCount} image${successCount !== 1 ? "s" : ""} resized to ${targetW}×${targetH}`);
+        if (errorCount > 0)
             addToast("error", `${errorCount} image${errorCount !== 1 ? "s" : ""} failed to resize`);
-        }
     };
 
     const downloadAll = () => {
         const eligible = items.filter((i) => i.status === "done" && i.resultBlob);
-        eligible.forEach((item) => {
-            helpers.downloadBlob(
-                item.resultBlob!,
-                helpers.getOutputFilename(item.file.name, item.targetW!, item.targetH!)
-            );
-        });
+        eligible.forEach((item) =>
+            helpers.downloadBlob(item.resultBlob!, helpers.getOutputFilename(item.file.name, item.targetW!, item.targetH!))
+        );
         addToast("success", `Downloading ${eligible.length} images…`);
     };
 
@@ -791,66 +920,101 @@ export default function ImageResizerPage() {
     const doneCount = items.filter((i) => i.status === "done").length;
     const canResize = items.length > 0 && widthValid && heightValid && !processing;
 
-    // Stagger delay helper
-    const stagger = (i: number) => ({ delay: i * 0.06 });
+    const stagger = (i: number) => ({ delay: i * 0.07 });
 
     return (
         <>
             <ToastContainer toasts={toasts} onRemove={removeToast} />
 
-            <div className="font-[family-name:var(--font-inter)] min-h-screen bg-slate-100 dark:bg-[#070B14] text-slate-900 dark:text-slate-100 py-6 sm:py-10 px-4 pb-24">
-                <div className="max-w-[740px] mx-auto flex flex-col gap-4 sm:gap-5">
+            {/* ── Page background ── */}
+            <div className="font-[family-name:var(--font-inter)] min-h-screen relative overflow-hidden text-slate-900 dark:text-slate-100 py-6 sm:py-12 px-4 pb-24">
+                {/* Background gradient mesh */}
+                <div
+                    className="fixed inset-0 pointer-events-none"
+                    style={{
+                        background: [
+                            "radial-gradient(ellipse 80% 50% at 20% 20%, rgba(24,86,255,0.08) 0%, transparent 60%)",
+                            "radial-gradient(ellipse 60% 40% at 80% 80%, rgba(147,51,234,0.06) 0%, transparent 60%)",
+                            "radial-gradient(ellipse 50% 60% at 50% 50%, rgba(255,255,255,0.02) 0%, transparent 70%)",
+                        ].join(", "),
+                    }}
+                />
+                <div className="fixed inset-0 pointer-events-none bg-slate-50 dark:bg-[#06080f]" style={{ zIndex: -1 }} />
+
+                <div className="relative max-w-[740px] mx-auto flex flex-col gap-4 sm:gap-5">
 
                     {/* ── Header ── */}
                     <motion.header
-                        initial={{ opacity: 0, y: -12 }}
+                        initial={{ opacity: 0, y: -16 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                        className="flex items-center justify-between px-4 sm:px-5 py-3.5 sm:py-4 bg-white dark:bg-[#0F1623] border border-slate-200 dark:border-[#1E2D45] rounded-2xl shadow-sm"
                     >
-                        <div className="flex items-center gap-2.5">
-                            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-blue-500/10 to-purple-500/10 border border-slate-200 dark:border-[#1E2D45] flex items-center justify-center flex-shrink-0">
-                                <QuantipixorIcon size={22} aria-label="Quantipixor" />
-                            </div>
-                            <div>
-                                <div className="font-[family-name:var(--font-plus-jakarta)] text-[14px] sm:text-[15px] font-bold tracking-tight leading-tight">
-                                    <span className="text-blue-600 dark:text-blue-400">Quanti</span>
-                                    <span className="text-slate-900 dark:text-slate-100">pixor</span>
+                        <GlassPanel className="px-4 sm:px-5 py-3.5">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    {/* Logo glass bubble */}
+                                    <div
+                                        className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 border border-white/60 dark:border-white/10"
+                                        style={{
+                                            background: "linear-gradient(135deg, rgba(24,86,255,0.12), rgba(147,51,234,0.08))",
+                                            backdropFilter: "blur(8px)",
+                                            boxShadow: "0 4px 16px rgba(24,86,255,0.15), inset 0 1px 0 rgba(255,255,255,0.5)",
+                                        }}
+                                    >
+                                        <QuantipixorIcon size={22} />
+                                    </div>
+                                    <div>
+                                        <div className="font-[family-name:var(--font-plus-jakarta)] text-[14px] sm:text-[15px] font-extrabold tracking-tight leading-tight">
+                                            <span className="bg-gradient-to-r from-[#1856FF] to-[#7C3AED] bg-clip-text text-transparent">Quanti</span>
+                                            <span className="text-slate-900 dark:text-slate-100">pixor</span>
+                                        </div>
+                                        <div className="font-[family-name:var(--font-space-grotesk)] text-[10px] font-semibold text-slate-400 dark:text-slate-500 tracking-widest uppercase mt-0.5">
+                                            Image Resizer
+                                        </div>
+                                    </div>
                                 </div>
-                                <div className="font-[family-name:var(--font-space-grotesk)] text-[10px] font-medium text-slate-400 dark:text-slate-500 tracking-widest uppercase mt-0.5">
-                                    Image Resizer
+
+                                {/* Badge */}
+                                <div
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#1856FF]/20 dark:border-[#1856FF]/20 font-[family-name:var(--font-space-grotesk)] text-[10px] sm:text-[11px] font-bold text-[#1856FF] dark:text-blue-400 tracking-wide"
+                                    style={{
+                                        background: "linear-gradient(135deg, rgba(24,86,255,0.08), rgba(147,51,234,0.05))",
+                                        backdropFilter: "blur(8px)",
+                                    }}
+                                >
+                                    <Maximize2 size={10} />
+                                    <span className="hidden sm:inline">Batch · Lossless · Free</span>
+                                    <span className="sm:hidden">Free</span>
                                 </div>
                             </div>
-                        </div>
-                        <div className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full bg-gradient-to-br from-blue-500/8 to-purple-500/8 border border-slate-200 dark:border-[#1E2D45] font-[family-name:var(--font-space-grotesk)] text-[10px] sm:text-[11px] font-semibold text-indigo-500 dark:text-indigo-400 tracking-wide">
-                            <Maximize2 size={11} />
-                            <span className="hidden sm:inline">Batch · Lossless · Free</span>
-                            <span className="sm:hidden">Free</span>
-                        </div>
+                        </GlassPanel>
                     </motion.header>
 
                     {/* ── Hero ── */}
                     <motion.div
-                        initial={{ opacity: 0, y: 8 }}
+                        initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ ...stagger(1), type: "spring", stiffness: 300, damping: 30 }}
-                        className="px-1 pt-1 pb-0"
+                        className="px-1"
                     >
-                        <h1 className="font-[family-name:var(--font-plus-jakarta)] text-2xl sm:text-3xl lg:text-[32px] font-extrabold tracking-tight leading-tight text-slate-900 dark:text-slate-100 mb-2">
+                        <h1 className="font-[family-name:var(--font-plus-jakarta)] text-2xl sm:text-[30px] lg:text-[34px] font-extrabold tracking-tight leading-tight text-slate-900 dark:text-white mb-2.5">
                             Resize images to{" "}
-                            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                            <span
+                                className="bg-clip-text text-transparent"
+                                style={{ backgroundImage: "linear-gradient(135deg, #1856FF 0%, #9333EA 100%)" }}
+                            >
                                 exact dimensions
                             </span>
                         </h1>
-                        <p className="font-[family-name:var(--font-inter)] text-[13px] sm:text-[14px] text-slate-500 dark:text-slate-400 leading-relaxed max-w-[500px]">
-                            Upload any image, set your target size, and export. When aspect
-                            ratios differ, images are centered with a black letterbox fill.
+                        <p className="font-[family-name:var(--font-inter)] text-[13px] sm:text-[14px] text-slate-500 dark:text-slate-400 leading-relaxed max-w-[520px]">
+                            Upload any image, set your target size, and export. When aspect ratios differ,
+                            images are centered with a black letterbox fill.
                         </p>
                     </motion.div>
 
                     {/* ── Upload ── */}
                     <motion.div
-                        initial={{ opacity: 0, y: 8 }}
+                        initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ ...stagger(2), type: "spring", stiffness: 300, damping: 30 }}
                     >
@@ -859,113 +1023,128 @@ export default function ImageResizerPage() {
 
                     {/* ── Dimensions Panel ── */}
                     <motion.div
-                        initial={{ opacity: 0, y: 8 }}
+                        initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ ...stagger(3), type: "spring", stiffness: 300, damping: 30 }}
-                        className="bg-white dark:bg-[#0F1623] border border-slate-200 dark:border-[#1E2D45] rounded-2xl p-4 sm:p-6 flex flex-col gap-4 shadow-sm"
                     >
-                        <div className="flex items-center gap-2 font-[family-name:var(--font-space-grotesk)] text-[11px] font-bold text-slate-400 dark:text-slate-500 tracking-widest uppercase">
-                            <Layers size={14} />
-                            <span>Output Dimensions</span>
-                        </div>
+                        <GlassPanel className="p-4 sm:p-6" luminous>
+                            <div className="flex flex-col gap-4">
+                                {/* Section label */}
+                                <div className="flex items-center gap-2 font-[family-name:var(--font-space-grotesk)] text-[11px] font-bold text-slate-400 dark:text-slate-500 tracking-widest uppercase">
+                                    <Layers size={13} />
+                                    Output Dimensions
+                                </div>
 
-                        {/* Preset grid */}
-                        <div className="grid grid-cols-4 sm:grid-cols-7 gap-1.5 sm:gap-2">
-                            {PRESETS.map((p, i) => (
-                                <motion.div
-                                    key={p.label}
-                                    initial={{ opacity: 0, scale: 0.9 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    transition={{ delay: 0.15 + i * 0.04, type: "spring", stiffness: 400, damping: 25 }}
+                                {/* Presets */}
+                                <div className="grid grid-cols-4 sm:grid-cols-7 gap-1.5">
+                                    {PRESETS.map((p, i) => (
+                                        <motion.div
+                                            key={p.label}
+                                            initial={{ opacity: 0, scale: 0.88 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            transition={{ delay: 0.18 + i * 0.04, type: "spring", stiffness: 400, damping: 25 }}
+                                        >
+                                            <PresetCard
+                                                label={p.label}
+                                                sub={p.sub}
+                                                w={p.w}
+                                                h={p.h}
+                                                active={activePreset === p.label}
+                                                onClick={(w, h) => applyPreset(w, h, p.label)}
+                                            />
+                                        </motion.div>
+                                    ))}
+                                </div>
+
+                                {/* Dimension inputs */}
+                                <div className="flex items-end gap-2 sm:gap-3">
+                                    <DimensionInput label="Width" value={width} onChange={handleWidthChange} error={!widthValid} />
+                                    
+                                    {/* Lock button */}
+                                    <motion.button
+                                        onClick={toggleLock}
+                                        whileHover={{ scale: 1.06 }}
+                                        whileTap={{ scale: 0.9 }}
+                                        title={lockRatio ? "Unlock aspect ratio" : "Lock aspect ratio"}
+                                        className={cn(
+                                            "flex flex-col items-center gap-1 px-3 py-[12px] rounded-2xl border cursor-pointer font-[family-name:var(--font-space-grotesk)] transition-all duration-200 flex-shrink-0 backdrop-blur-xl",
+                                            lockRatio
+                                                ? "text-[#1856FF]"
+                                                : [
+                                                    "border-slate-200/60 dark:border-white/[0.08]",
+                                                    "bg-white/50 dark:bg-white/[0.03]",
+                                                    "text-slate-400 dark:text-slate-500",
+                                                    "hover:border-[#1856FF]/30 hover:text-[#1856FF]",
+                                                ].join(" ")
+                                        )}
+                                        style={
+                                            lockRatio
+                                                ? {
+                                                    background: "linear-gradient(135deg, rgba(24,86,255,0.15), rgba(147,51,234,0.1))",
+                                                    borderColor: "rgba(24,86,255,0.35)",
+                                                    boxShadow: "0 0 20px rgba(24,86,255,0.2), inset 0 1px 0 rgba(255,255,255,0.15)",
+                                                }
+                                                : {}
+                                        }
+                                    >
+                                        <motion.span
+                                            animate={{ rotate: lockRatio ? 0 : 15 }}
+                                            transition={{ type: "spring", stiffness: 400, damping: 20 }}
+                                        >
+                                            {lockRatio ? <Lock size={14} /> : <Unlock size={14} />}
+                                        </motion.span>
+                                        <span className="text-[8px] font-bold tracking-widest uppercase leading-none">
+                                            {lockRatio ? "Lock" : "Free"}
+                                        </span>
+                                    </motion.button>
+
+                                    <DimensionInput label="Height" value={height} onChange={handleHeightChange} error={!heightValid} />
+                                </div>
+
+                                {/* Validation error */}
+                                <AnimatePresence>
+                                    {(!widthValid || !heightValid) && (
+                                        <motion.p
+                                            initial={{ opacity: 0, height: 0 }}
+                                            animate={{ opacity: 1, height: "auto" }}
+                                            exit={{ opacity: 0, height: 0 }}
+                                            className="flex items-center gap-1.5 font-[family-name:var(--font-inter)] text-[12px] font-medium text-[#EA2143] overflow-hidden"
+                                        >
+                                            <AlertCircle size={13} />
+                                            Dimensions must be between 1 and 8000 px.
+                                        </motion.p>
+                                    )}
+                                </AnimatePresence>
+
+                                {/* Info note */}
+                                <div
+                                    className="flex items-start gap-2.5 px-3.5 py-3 rounded-2xl border border-[#1856FF]/15 dark:border-[#1856FF]/10 font-[family-name:var(--font-inter)] text-[12px] text-[#1856FF] dark:text-blue-400 leading-relaxed"
+                                    style={{
+                                        background: "linear-gradient(135deg, rgba(24,86,255,0.06), rgba(147,51,234,0.04))",
+                                        backdropFilter: "blur(8px)",
+                                    }}
                                 >
-                                    <PresetCard
-                                        label={p.label}
-                                        sub={p.sub}
-                                        w={p.w}
-                                        h={p.h}
-                                        active={activePreset === p.label}
-                                        onClick={(w, h) => applyPreset(w, h, p.label)}
-                                    />
-                                </motion.div>
-                            ))}
-                        </div>
-
-                        {/* Dimension inputs row */}
-                        <div className="flex items-end gap-2 sm:gap-2.5">
-                            <DimensionInput
-                                label="Width"
-                                value={width}
-                                onChange={handleWidthChange}
-                                error={!widthValid}
-                            />
-
-                            {/* Lock button */}
-                            <motion.button
-                                onClick={toggleLock}
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.92 }}
-                                title={lockRatio ? "Unlock aspect ratio" : "Lock aspect ratio"}
-                                className={[
-                                    "flex flex-col items-center gap-1 px-2.5 py-[11px] rounded-xl border cursor-pointer font-[family-name:var(--font-space-grotesk)] transition-all duration-150 flex-shrink-0",
-                                    lockRatio
-                                        ? "border-blue-500 dark:border-blue-600 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 text-blue-600 dark:text-blue-400 shadow-sm"
-                                        : "border-slate-200 dark:border-[#1E2D45] bg-slate-50 dark:bg-[#151E2E] text-slate-400 hover:border-blue-400 hover:text-blue-500",
-                                ].join(" ")}
-                            >
-                                <motion.span
-                                    animate={{ rotate: lockRatio ? 0 : 15 }}
-                                    transition={{ type: "spring", stiffness: 400, damping: 20 }}
-                                >
-                                    {lockRatio ? <Lock size={14} /> : <Unlock size={14} />}
-                                </motion.span>
-                                <span className="text-[8px] font-bold tracking-widest uppercase leading-none">
-                                    {lockRatio ? "Lock" : "Free"}
-                                </span>
-                            </motion.button>
-
-                            <DimensionInput
-                                label="Height"
-                                value={height}
-                                onChange={handleHeightChange}
-                                error={!heightValid}
-                            />
-                        </div>
-
-                        <AnimatePresence>
-                            {(!widthValid || !heightValid) && (
-                                <motion.p
-                                    initial={{ opacity: 0, height: 0 }}
-                                    animate={{ opacity: 1, height: "auto" }}
-                                    exit={{ opacity: 0, height: 0 }}
-                                    className="flex items-center gap-1.5 font-[family-name:var(--font-inter)] text-[12px] font-medium text-red-400 overflow-hidden"
-                                >
-                                    <AlertCircle size={13} />
-                                    Dimensions must be between 1 and 8000 px.
-                                </motion.p>
-                            )}
-                        </AnimatePresence>
-
-                        {/* Info note */}
-                        <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl bg-gradient-to-br from-blue-500/5 to-purple-500/5 border border-indigo-100 dark:border-indigo-900/40 font-[family-name:var(--font-inter)] text-[12px] text-indigo-500 dark:text-indigo-400 leading-relaxed">
-                            <AlertCircle size={13} className="flex-shrink-0 mt-0.5" />
-                            <span>
-                                Images with a different aspect ratio will be letterboxed —
-                                centered on a black background.
-                            </span>
-                        </div>
+                                    <AlertCircle size={13} className="flex-shrink-0 mt-0.5" />
+                                    <span>
+                                        Images with a different aspect ratio will be letterboxed — centered on a black background.
+                                    </span>
+                                </div>
+                            </div>
+                        </GlassPanel>
                     </motion.div>
 
                     {/* ── Queue ── */}
                     <AnimatePresence>
                         {items.length > 0 && (
                             <motion.div
-                                initial={{ opacity: 0, y: 10 }}
+                                initial={{ opacity: 0, y: 12 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -10 }}
+                                exit={{ opacity: 0, y: -8 }}
                                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
                                 className="flex flex-col gap-2.5"
                             >
-                                <div className="flex items-center justify-between">
+                                {/* Queue header */}
+                                <div className="flex items-center justify-between px-1">
                                     <div className="flex items-center gap-2 flex-wrap">
                                         <span className="font-[family-name:var(--font-plus-jakarta)] text-[13px] font-bold text-slate-800 dark:text-slate-100">
                                             <AnimatedNumber value={items.length} /> image{items.length !== 1 ? "s" : ""}
@@ -973,10 +1152,11 @@ export default function ImageResizerPage() {
                                         <AnimatePresence>
                                             {doneCount > 0 && (
                                                 <motion.span
-                                                    initial={{ opacity: 0, scale: 0.7 }}
+                                                    initial={{ opacity: 0, scale: 0.6 }}
                                                     animate={{ opacity: 1, scale: 1 }}
-                                                    exit={{ opacity: 0, scale: 0.7 }}
-                                                    className="font-[family-name:var(--font-space-grotesk)] text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800/30 px-2 py-0.5 rounded-full"
+                                                    exit={{ opacity: 0, scale: 0.6 }}
+                                                    className="font-[family-name:var(--font-space-grotesk)] text-[10px] font-bold text-emerald-600 dark:text-emerald-400 border border-emerald-300/50 dark:border-emerald-500/20 px-2 py-0.5 rounded-full"
+                                                    style={{ background: "rgba(16,185,129,0.08)" }}
                                                 >
                                                     {doneCount} done
                                                 </motion.span>
@@ -988,7 +1168,8 @@ export default function ImageResizerPage() {
                                                     initial={{ opacity: 0, scale: 0.8 }}
                                                     animate={{ opacity: 1, scale: 1 }}
                                                     exit={{ opacity: 0, scale: 0.8 }}
-                                                    className="font-[family-name:var(--font-space-grotesk)] text-[10px] font-bold text-amber-500 bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800/30 px-2 py-0.5 rounded-full"
+                                                    className="font-[family-name:var(--font-space-grotesk)] text-[10px] font-bold text-amber-500 border border-amber-400/30 px-2 py-0.5 rounded-full"
+                                                    style={{ background: "rgba(245,158,11,0.08)" }}
                                                 >
                                                     Processing…
                                                 </motion.span>
@@ -1000,13 +1181,14 @@ export default function ImageResizerPage() {
                                         whileTap={{ scale: 0.96 }}
                                         onClick={clearAll}
                                         disabled={processing}
-                                        className="flex items-center gap-1.5 font-[family-name:var(--font-inter)] text-[12px] font-semibold text-red-400 bg-transparent border-none cursor-pointer px-2.5 py-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
+                                        className="flex items-center gap-1.5 font-[family-name:var(--font-inter)] text-[12px] font-semibold text-[#EA2143]/70 hover:text-[#EA2143] bg-transparent border-none cursor-pointer px-2.5 py-1.5 rounded-xl hover:bg-red-50/80 dark:hover:bg-red-900/10 transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
                                     >
                                         <Trash2 size={13} />
                                         Clear all
                                     </motion.button>
                                 </div>
 
+                                {/* Progress */}
                                 <AnimatePresence>
                                     {processing && (
                                         <motion.div
@@ -1022,7 +1204,8 @@ export default function ImageResizerPage() {
                                     )}
                                 </AnimatePresence>
 
-                                <motion.div layout className="flex flex-col gap-1.5">
+                                {/* Image list */}
+                                <motion.div layout className="flex flex-col gap-2">
                                     <AnimatePresence initial={false}>
                                         {items.map((item) => (
                                             <ImageCard key={item.id} item={item} onRemove={removeItem} />
@@ -1035,23 +1218,36 @@ export default function ImageResizerPage() {
 
                     {/* ── Actions ── */}
                     <motion.div
-                        initial={{ opacity: 0, y: 8 }}
+                        initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ ...stagger(4), type: "spring", stiffness: 300, damping: 30 }}
                         className="flex flex-col sm:flex-row gap-2.5"
                     >
+                        {/* Resize button */}
                         <motion.button
                             onClick={handleResize}
                             disabled={!canResize}
                             whileHover={canResize ? { scale: 1.01, y: -1 } : {}}
                             whileTap={canResize ? { scale: 0.98 } : {}}
                             transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                            className={[
-                                "flex-1 py-3.5 sm:py-4 px-5 sm:px-6 rounded-xl border-none font-[family-name:var(--font-plus-jakarta)] text-[14px] sm:text-[15px] font-bold cursor-pointer flex items-center justify-center gap-2 tracking-tight transition-all duration-150",
+                            className={cn(
+                                "flex-1 py-4 px-6 rounded-2xl font-[family-name:var(--font-plus-jakarta)] text-[14px] sm:text-[15px] font-bold cursor-pointer flex items-center justify-center gap-2 tracking-tight transition-all duration-150 border-none"
+                            )}
+                            style={
                                 canResize
-                                    ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/20"
-                                    : "bg-slate-200 dark:bg-[#1E2D45] text-slate-400 dark:text-slate-600 cursor-not-allowed shadow-none",
-                            ].join(" ")}
+                                    ? {
+                                        background: "linear-gradient(135deg, #1856FF 0%, #7C3AED 100%)",
+                                        boxShadow: "0 8px 32px rgba(24,86,255,0.35), 0 1px 0 rgba(255,255,255,0.2) inset",
+                                        color: "white",
+                                    }
+                                    : {
+                                        background: "rgba(148,163,184,0.12)",
+                                        backdropFilter: "blur(8px)",
+                                        border: "1px solid rgba(148,163,184,0.2)",
+                                        color: "rgba(148,163,184,0.5)",
+                                        cursor: "not-allowed",
+                                    }
+                            }
                         >
                             {processing ? (
                                 <>
@@ -1075,17 +1271,24 @@ export default function ImageResizerPage() {
                             )}
                         </motion.button>
 
+                        {/* Download all */}
                         <AnimatePresence>
                             {doneCount > 1 && (
                                 <motion.button
-                                    initial={{ opacity: 0, scale: 0.85, width: 0 }}
+                                    initial={{ opacity: 0, scale: 0.82, width: 0 }}
                                     animate={{ opacity: 1, scale: 1, width: "auto" }}
-                                    exit={{ opacity: 0, scale: 0.85, width: 0 }}
+                                    exit={{ opacity: 0, scale: 0.82, width: 0 }}
                                     transition={{ type: "spring", stiffness: 400, damping: 28 }}
-                                    whileHover={{ scale: 1.02 }}
+                                    whileHover={{ scale: 1.02, y: -1 }}
                                     whileTap={{ scale: 0.97 }}
                                     onClick={downloadAll}
-                                    className="sm:w-auto py-3.5 sm:py-4 px-4 sm:px-5 rounded-xl border border-emerald-300 dark:border-emerald-700/60 bg-emerald-50 dark:bg-emerald-900/10 text-emerald-600 dark:text-emerald-400 font-[family-name:var(--font-plus-jakarta)] text-[13px] sm:text-[14px] font-bold cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap hover:bg-emerald-100 dark:hover:bg-emerald-900/20 transition-colors duration-150 overflow-hidden"
+                                    className="py-4 px-5 rounded-2xl font-[family-name:var(--font-plus-jakarta)] text-[13px] sm:text-[14px] font-bold cursor-pointer flex items-center justify-center gap-2 whitespace-nowrap overflow-hidden border backdrop-blur-xl transition-all duration-150"
+                                    style={{
+                                        background: "rgba(16,185,129,0.08)",
+                                        borderColor: "rgba(16,185,129,0.3)",
+                                        color: "#10b981",
+                                        boxShadow: "0 4px 16px rgba(16,185,129,0.12), inset 0 1px 0 rgba(255,255,255,0.1)",
+                                    }}
                                 >
                                     <Download size={14} />
                                     Download all ({doneCount})
@@ -1101,7 +1304,7 @@ export default function ImageResizerPage() {
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 exit={{ opacity: 0 }}
-                                className="font-[family-name:var(--font-inter)] text-center text-[13px] text-slate-400 dark:text-slate-500 py-3"
+                                className="font-[family-name:var(--font-inter)] text-center text-[13px] text-slate-400 dark:text-slate-500 py-2"
                             >
                                 Upload images above, then set your target dimensions and hit Resize.
                             </motion.p>
@@ -1112,13 +1315,11 @@ export default function ImageResizerPage() {
                     <motion.footer
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        transition={{ delay: 0.5 }}
-                        className="flex items-center justify-center gap-1.5 font-[family-name:var(--font-inter)] text-[11px] text-slate-400 dark:text-slate-500 pt-4 border-t border-slate-200 dark:border-[#1E2D45]"
+                        transition={{ delay: 0.6 }}
+                        className="flex items-center justify-center gap-2 font-[family-name:var(--font-inter)] text-[11px] text-slate-400 dark:text-slate-500 pt-5 border-t border-slate-200/60 dark:border-white/[0.06]"
                     >
                         <QuantipixorIcon size={13} />
-                        <span>
-                            Quantipixor · All processing happens in your browser — no uploads to any server.
-                        </span>
+                        <span>Quantipixor · All processing happens in your browser — no uploads to any server.</span>
                     </motion.footer>
                 </div>
             </div>

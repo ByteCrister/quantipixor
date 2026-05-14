@@ -12,13 +12,13 @@ import {
   ChevronDown,
   Maximize2,
   Layers,
+  Code2,
 } from "lucide-react";
 import QuantipixorIcon from "@/components/global/QuantipixorIcon";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
 
 // ─── More-menu items ──────────────────────────────────────────────────────────
-
 const MORE_ITEMS = [
   {
     label: "Image Resizer",
@@ -53,27 +53,18 @@ const MORE_ITEMS = [
 ];
 
 // ─── More Dropdown ────────────────────────────────────────────────────────────
-
-function MoreDropdown({
-  onNavigate,
-}: {
-  onNavigate: (route: string) => void;
-}) {
+function MoreDropdown({ onNavigate }: { onNavigate: (route: string) => void }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  // Close on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     };
     if (open) document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, [open]);
 
-  // Close on Escape
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") setOpen(false);
@@ -117,14 +108,11 @@ function MoreDropdown({
             transition={{ type: "spring", stiffness: 500, damping: 35 }}
             className={cn(
               "absolute right-0 top-full z-50 mt-2 w-64 origin-top-right overflow-hidden rounded-2xl border",
-              // Light
-              "bg-white/90 border-black/[0.08] shadow-[0_16px_48px_-12px_rgba(0,0,0,0.18),0_4px_16px_-4px_rgba(0,0,0,0.08)]",
-              // Dark
-              "dark:bg-[#0f1623]/95 dark:border-white/[0.08] dark:shadow-[0_16px_48px_-12px_rgba(0,0,0,0.6)]",
+              "bg-white/90 border-black/8 shadow-[0_16px_48px_-12px_rgba(0,0,0,0.18),0_4px_16px_-4px_rgba(0,0,0,0.08)]",
+              "dark:bg-[#0f1623]/95 dark:border-white/8 dark:shadow-[0_16px_48px_-12px_rgba(0,0,0,0.6)]",
               "backdrop-blur-2xl"
             )}
           >
-            {/* Top gloss */}
             <div
               className="pointer-events-none absolute inset-x-0 top-0 h-px"
               style={{
@@ -132,7 +120,6 @@ function MoreDropdown({
                   "linear-gradient(90deg, transparent, rgba(255,255,255,0.6) 40%, rgba(255,255,255,0.6) 60%, transparent)",
               }}
             />
-
             <div className="p-1.5">
               {MORE_ITEMS.map((item) => (
                 <button
@@ -145,21 +132,19 @@ function MoreDropdown({
                   className={cn(
                     "group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-all duration-150",
                     "text-foreground/80 hover:bg-[#1856FF]/6 hover:text-[#1856FF]",
-                    "dark:text-white/70 dark:hover:bg-white/[0.06] dark:hover:text-white",
+                    "dark:text-white/70 dark:hover:bg-white/6 dark:hover:text-white",
                     "focus-visible:outline-none focus-visible:bg-[#1856FF]/6"
                   )}
                 >
-                  {/* Icon bubble */}
                   <span
                     className={cn(
-                      "flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg border transition-colors duration-150",
-                      "border-black/[0.08] bg-black/[0.03] text-foreground/60 group-hover:border-[#1856FF]/25 group-hover:bg-[#1856FF]/8 group-hover:text-[#1856FF]",
-                      "dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-white/50 dark:group-hover:border-[#1856FF]/30 dark:group-hover:bg-[#1856FF]/10 dark:group-hover:text-blue-300"
+                      "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border transition-colors duration-150",
+                      "border-black/8 bg-black/3 text-foreground/60 group-hover:border-[#1856FF]/25 group-hover:bg-[#1856FF]/8 group-hover:text-[#1856FF]",
+                      "dark:border-white/8 dark:bg-white/4 dark:text-white/50 dark:group-hover:border-[#1856FF]/30 dark:group-hover:bg-[#1856FF]/10 dark:group-hover:text-blue-300"
                     )}
                   >
                     {item.icon}
                   </span>
-
                   <span className="flex min-w-0 flex-col">
                     <span className="text-sm font-semibold leading-tight">{item.label}</span>
                     <span className="text-[11px] font-normal text-foreground/45 group-hover:text-[#1856FF]/60 dark:text-white/35 dark:group-hover:text-blue-300/60">
@@ -169,8 +154,119 @@ function MoreDropdown({
                 </button>
               ))}
             </div>
+            <div
+              className="pointer-events-none absolute inset-x-0 bottom-0 h-px"
+              style={{
+                background:
+                  "linear-gradient(90deg, transparent, rgba(0,0,0,0.06) 40%, rgba(0,0,0,0.06) 60%, transparent)",
+              }}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
 
-            {/* Bottom gloss */}
+// ─── API Dropdown (single page navigation) ────────────────────────────────────
+function ApiDropdown({ onNavigate }: { onNavigate: (route: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    if (open) document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    if (open) document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="true"
+        aria-expanded={open}
+        className={cn(
+          "inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition-all",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1856FF]/40 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[#0c0b10]",
+          open
+            ? "border-[#1856FF]/50 bg-[#1856FF]/8 text-[#1856FF] dark:border-[#1856FF]/40 dark:bg-[#1856FF]/10 dark:text-blue-300"
+            : "border-black/20 bg-transparent text-foreground/80 hover:border-[#1856FF]/50 hover:bg-[#1856FF]/5 hover:text-[#1856FF] dark:border-white/20 dark:text-white/70 dark:hover:border-white/40 dark:hover:bg-white/5 dark:hover:text-white"
+        )}
+      >
+        <Code2 className="h-4 w-4" />
+        <span>API</span>
+        <motion.span
+          animate={{ rotate: open ? 180 : 0 }}
+          transition={{ duration: 0.2, ease: "easeInOut" }}
+          className="flex items-center"
+        >
+          <ChevronDown className="h-3.5 w-3.5" />
+        </motion.span>
+      </button>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: 6, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 4, scale: 0.97 }}
+            transition={{ type: "spring", stiffness: 500, damping: 35 }}
+            className={cn(
+              "absolute right-0 top-full z-50 mt-2 w-56 origin-top-right overflow-hidden rounded-2xl border",
+              "bg-white/90 border-black/8 shadow-[0_16px_48px_-12px_rgba(0,0,0,0.18),0_4px_16px_-4px_rgba(0,0,0,0.08)]",
+              "dark:bg-[#0f1623]/95 dark:border-white/8 dark:shadow-[0_16px_48px_-12px_rgba(0,0,0,0.6)]",
+              "backdrop-blur-2xl"
+            )}
+          >
+            <div
+              className="pointer-events-none absolute inset-x-0 top-0 h-px"
+              style={{
+                background:
+                  "linear-gradient(90deg, transparent, rgba(255,255,255,0.6) 40%, rgba(255,255,255,0.6) 60%, transparent)",
+              }}
+            />
+            <div className="p-1.5">
+              <button
+                type="button"
+                onClick={() => {
+                  onNavigate("/mock/profile");
+                  setOpen(false);
+                }}
+                className={cn(
+                  "group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-all duration-150",
+                  "text-foreground/80 hover:bg-[#1856FF]/6 hover:text-[#1856FF]",
+                  "dark:text-white/70 dark:hover:bg-white/6 dark:hover:text-white",
+                  "focus-visible:outline-none focus-visible:bg-[#1856FF]/6"
+                )}
+              >
+                <span
+                  className={cn(
+                    "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border transition-colors duration-150",
+                    "border-black/8 bg-black/3 text-foreground/60 group-hover:border-[#1856FF]/25 group-hover:bg-[#1856FF]/8 group-hover:text-[#1856FF]",
+                    "dark:border-white/8 dark:bg-white/4 dark:text-white/50 dark:group-hover:border-[#1856FF]/30 dark:group-hover:bg-[#1856FF]/10 dark:group-hover:text-blue-300"
+                  )}
+                >
+                  <Code2 className="h-4 w-4" />
+                </span>
+                <span className="flex min-w-0 flex-col">
+                  <span className="text-sm font-semibold leading-tight">Mock Profile</span>
+                  <span className="text-[11px] font-normal text-foreground/45 group-hover:text-[#1856FF]/60 dark:text-white/35 dark:group-hover:text-blue-300/60">
+                    View mock profile page
+                  </span>
+                </span>
+              </button>
+            </div>
             <div
               className="pointer-events-none absolute inset-x-0 bottom-0 h-px"
               style={{
@@ -186,7 +282,6 @@ function MoreDropdown({
 }
 
 // ─── Header ───────────────────────────────────────────────────────────────────
-
 const Header: React.FC = () => {
   const router = useRouter();
   const [scrolled, setScrolled] = useState(false);
@@ -227,7 +322,6 @@ const Header: React.FC = () => {
             : "border-black/6 shadow-[inset_0_1px_0_0_var(--glass-highlight)] dark:border-white/8",
         )}
       >
-        {/* Luminous bottom edge */}
         <div
           className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-linear-to-r from-transparent via-[#1856FF]/35 to-transparent dark:via-[#1856FF]/45"
           aria-hidden
@@ -235,7 +329,6 @@ const Header: React.FC = () => {
 
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex flex-wrap items-center justify-between gap-4 py-3.5 md:py-4">
-
             {/* ── Logo ── */}
             <button
               type="button"
@@ -263,34 +356,26 @@ const Header: React.FC = () => {
             </button>
 
             {/* ── Desktop Navigation ── */}
-            <nav
-              className="hidden md:flex md:items-center md:gap-2"
-              aria-label="Main navigation"
-            >
+            <nav className="hidden md:flex md:items-center md:gap-2" aria-label="Main navigation">
               {/* About / Help pill group */}
               <div
-                className="flex items-center gap-0.5 rounded-full border border-black/[0.07] bg-black/2 p-1 shadow-inner backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]"
+                className="flex items-center gap-0.5 rounded-full border border-black/[0.07] bg-black/2 p-1 shadow-inner backdrop-blur-sm dark:border-white/10 dark:bg-white/4"
                 role="group"
                 aria-label="About and help"
               >
-                <button
-                  type="button"
-                  onClick={() => navigate("/about")}
-                  className={navPillBtn}
-                >
+                <button type="button" onClick={() => navigate("/about")} className={navPillBtn}>
                   About
                 </button>
-                <button
-                  type="button"
-                  onClick={() => navigate("/help")}
-                  className={navPillBtn}
-                >
+                <button type="button" onClick={() => navigate("/help")} className={navPillBtn}>
                   Help
                 </button>
               </div>
 
               {/* Tools dropdown */}
               <MoreDropdown onNavigate={navigate} />
+
+              {/* API dropdown — now navigates to a page */}
+              <ApiDropdown onNavigate={navigate} />
 
               {/* Primary CTA */}
               <button
@@ -381,7 +466,7 @@ const Header: React.FC = () => {
                 onClick={() => navigate(item.route)}
                 className={cn(mobileNavItem, "flex items-center gap-3")}
               >
-                <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg border border-black/[0.08] bg-black/[0.03] text-foreground/60 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-white/50">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-black/8 bg-black/3 text-foreground/60 dark:border-white/8 dark:bg-white/4 dark:text-white/50">
                   {item.icon}
                 </span>
                 <span className="flex flex-col items-start">
@@ -390,6 +475,21 @@ const Header: React.FC = () => {
                 </span>
               </button>
             ))}
+
+            {/* ── Mobile: API page navigation ── */}
+            <div className="my-2 h-px bg-black/8 dark:bg-white/8" />
+            <button
+              onClick={() => navigate("/mock/profile")}
+              className={cn(mobileNavItem, "flex items-center gap-3")}
+            >
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-black/8 bg-black/3 text-foreground/60 dark:border-white/8 dark:bg-white/4 dark:text-white/50">
+                <Code2 className="h-4 w-4" />
+              </span>
+              <span className="flex flex-col items-start">
+                <span className="text-sm font-semibold leading-tight">Mock Profile</span>
+                <span className="text-[11px] text-foreground/45 dark:text-white/35">View mock profile page</span>
+              </span>
+            </button>
           </nav>
 
           {/* Drawer footer */}

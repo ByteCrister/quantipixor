@@ -9,8 +9,10 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { Toaster } from "@/components/ui/toaster";
 import { jetbrainsMono, plusJakarta } from "@/fonts/google-fonts";
+import { Geist } from "next/font/google";
+import { cn } from "@/lib/utils";
 
-
+const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 export const metadata: Metadata = {  
   metadataBase: new URL(  
@@ -93,7 +95,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${plusJakarta.variable} ${jetbrainsMono.variable} h-full antialiased`}
+      className={cn("h-full", "antialiased", plusJakarta.variable, jetbrainsMono.variable, "font-sans", geist.variable)}
     >
       <body className="flex min-h-full flex-col font-sans text-foreground">
         <Header />

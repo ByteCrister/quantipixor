@@ -1,6 +1,6 @@
 "use client";
 
-import { CropSettings, ImageItem } from "@/types";
+import { CropSettings, ImageItem } from "@/types/index.types";
 import { useEffect, useState } from "react";
 import cropImageFromPreview from "../../global/image-cropper/cropImageFromPreview";
 import {

@@ -1,7 +1,7 @@
 // components/LanguageSelector.tsx
 "use client";
 
-import { LANGUAGES, LanguageCode } from "@/const/languages";
+import { LANGUAGES, LanguageCode } from "@/const/languages.const";
 
 
 interface LanguageSelectorProps {

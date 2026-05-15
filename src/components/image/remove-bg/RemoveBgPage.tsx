@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { CropSettings } from "@/types";
-import { FILE_INPUT_ACCEPT } from "@/const/image-extensions";
+import { CropSettings } from "@/types/index.types";
+import { FILE_INPUT_ACCEPT } from "@/const/image-extensions.const";
 import { formatBytes } from "@/utils/image/compressors/formatBytes";
 import { validateImage } from "@/utils/image/compressors/validation";
 import cropImageFromPreview from "../../global/image-cropper/cropImageFromPreview";

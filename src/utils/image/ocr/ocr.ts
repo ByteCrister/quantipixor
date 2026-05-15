@@ -1,5 +1,5 @@
 // utils/image/ocr/ocr.ts
-import { buildLangString, LanguageCode } from "@/const/languages";
+import { buildLangString, LanguageCode } from "@/const/languages.const";
 import Tesseract from "tesseract.js";
 
 export interface WordWithBBox {

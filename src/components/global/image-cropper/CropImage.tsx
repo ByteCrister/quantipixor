@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { RefreshCw, ZoomIn, ZoomOut } from "lucide-react";
 
-import type { CropSettings } from "@/types";
+import type { CropSettings } from "@/types/index.types";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 

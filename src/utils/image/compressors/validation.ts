@@ -1,5 +1,5 @@
-import { CompressionConfig } from "@/types";
-import { getEffectiveImageMime, SUPPORTED_MIME_TYPES } from "@/const/image-extensions";
+import { CompressionConfig } from "@/types/index.types";
+import { getEffectiveImageMime, SUPPORTED_MIME_TYPES } from "@/const/image-extensions.const";
 
 export interface ValidationResult {
   valid: boolean;

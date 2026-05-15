@@ -8,7 +8,7 @@ import {
   FaLinkedin,
 } from "react-icons/fa";
 import QuantipixorIcon from "@/components/global/QuantipixorIcon";
-import { SOCIAL_LINKS } from "@/const/social-links";
+import { SOCIAL_LINKS } from "@/const/social-links.const";
 
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();

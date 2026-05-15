@@ -1,7 +1,7 @@
 "use client";
 
 import { generateDocx } from "@/utils/image/ocr/docx-generator";
-import { LanguageCode } from "@/const/languages";
+import { LanguageCode } from "@/const/languages.const";
 import { toast } from "@/store/toastStore";
 import { useState, useCallback, useEffect } from "react";
 import { UploadZone } from "./UploadZone";

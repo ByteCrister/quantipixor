@@ -7,6 +7,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   const routes = [
     { path: "/", priority: 1.0 },
+    { path: "/mock/json-viewer", priority: 0.9 },
     { path: "/mock/profile", priority: 0.9 },
     { path: "/image/resize", priority: 0.9 },
     { path: "/image/converter", priority: 0.9 },

@@ -1,4 +1,4 @@
-import { getEffectiveImageMime } from "@/const/image-extensions";
+import { getEffectiveImageMime } from "@/const/image-extensions.const";
 
 // ── Internal helpers ──────────────────────────────────────────────────────────
 

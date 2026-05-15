@@ -24,7 +24,7 @@ import {
   HardDrive,
 } from "lucide-react";
 
-import { SOCIAL_LINKS } from "@/const/social-links";
+import { SOCIAL_LINKS } from "@/const/social-links.const";
 import { inter, jetbrainsMono, plusJakarta } from "@/fonts/google-fonts";
 
 

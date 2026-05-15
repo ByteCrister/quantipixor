@@ -24,11 +24,11 @@ import {
 import {
   FILE_INPUT_ACCEPT,
   SUPPORTED_EXTENSIONS_LABEL_SHORT,
-} from "@/const/image-extensions";
+} from "@/const/image-extensions.const";
 import {
   MAX_IMAGES_PER_UPLOAD,
   MAX_TOTAL_IMAGES,
-} from "@/const/imageCompressorLimits";
+} from "@/const/imageCompressorLimits.const";
 import {
   useImages,
   useConfig,
@@ -51,7 +51,7 @@ import {
   type BatchConfirmAction,
 } from "./BatchActionConfirmDialog";
 import { cn } from "@/lib/utils";
-import type { ImageItem } from "@/types";
+import type { ImageItem } from "@/types/index.types";
 import ImagePreviewDialog from "./ImagePreviewDialog";
 import { Field, IndeterminateBar, inputClass, ProgressBar, StatCard } from "./loadImage";
 

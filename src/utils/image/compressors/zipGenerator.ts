@@ -1,6 +1,6 @@
 import JSZip from 'jszip';
-import { ImageItem, CompressionConfig } from '@/types';
-import { mimeToOutputExtension } from '@/const/image-extensions';
+import { ImageItem, CompressionConfig } from '@/types/index.types';
+import { mimeToOutputExtension } from '@/const/image-extensions.const';
 
 /**
  * Generates a ZIP archive containing all successfully compressed images.

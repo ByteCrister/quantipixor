@@ -1,6 +1,6 @@
 "use client";
 
-import { CropSettings } from "@/types";
+import { CropSettings } from "@/types/index.types";
 import loadImage, { pickCanvasMimeFromName } from "../../image/batch-compressor/loadImage";
 
 export default async function cropImageFromPreview(

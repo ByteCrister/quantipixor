@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Landing from "@/components/landing/Landing";
-import { SOCIAL_LINKS } from "@/const/social-links";
+import { SOCIAL_LINKS } from "@/const/social-links.const";
 
 const CREATOR_NAME = "Sadiqul Islam Shakib";
 

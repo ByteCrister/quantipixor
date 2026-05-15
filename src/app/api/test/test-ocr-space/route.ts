@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import type { OcrApiResponse, OcrSuccessResponse } from '@/types/ocr-space';
+import type { OcrApiResponse, OcrSuccessResponse } from '@/types/ocr-space.types';
 
 // Request body type
 interface OcrRequest {

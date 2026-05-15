@@ -14,8 +14,8 @@ import {
 
 import { validateImage } from "@/utils/image/compressors/validation";
 import { formatBytes } from "@/utils/image/compressors/formatBytes";
-import type { CompressionConfig } from "@/types";
-import type { CropSettings } from "@/types";
+import type { CompressionConfig } from "@/types/index.types";
+import type { CropSettings } from "@/types/index.types";
 import cropImageFromPreview from "@/components/global/image-cropper/cropImageFromPreview";
 import CropImage from "@/components/global/image-cropper/CropImage";
 import { Button } from "@/components/ui/button";

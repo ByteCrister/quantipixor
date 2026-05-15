@@ -56,7 +56,7 @@ const RATE_LIMITS = {
  *
  * ───────────────────────────────────────────────────────────────
  *
- * @param perpose
+ * @param purpose
  * @param userId - Unique identifier for the user (must be stable)
  * @param type - Rate limit bucket ("minute" | "hour")
  *
@@ -65,7 +65,7 @@ const RATE_LIMITS = {
  *   false → rate limit exceeded
  */
 export async function checkRateLimit(
-    perpose: string,
+    purpose: string,
     userId: string,
     type: RateLimitType
 ): Promise<boolean> {
@@ -77,7 +77,7 @@ export async function checkRateLimit(
     const { limit, window } = config;
 
     // Redis key for this user + time bucket
-    const key = `${perpose}:v2:ratelimit:${userId}:${type}`;
+    const key = `${purpose}:v2:ratelimit:${userId}:${type}`;
 
     try {
         // Atomically increment request count

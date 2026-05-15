@@ -1,3 +1,4 @@
+// src/fonts/google-fonts.ts
 import { Inter, JetBrains_Mono, Plus_Jakarta_Sans, Space_Grotesk } from "next/font/google";
 
 export const plusJakarta = Plus_Jakarta_Sans({

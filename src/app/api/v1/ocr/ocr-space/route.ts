@@ -1,5 +1,5 @@
 // app/api/ocr/ocr-space/route.ts
-import { OcrApiResponse, OcrSuccessResponse } from "@/types/ocr-space";
+import { OcrApiResponse, OcrSuccessResponse } from "@/types/ocr-space.types";
 import { NextRequest, NextResponse } from "next/server";
 import sharp from "sharp";
 

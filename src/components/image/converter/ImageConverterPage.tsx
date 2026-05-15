@@ -21,7 +21,7 @@ import {
   Sparkles,
 } from "lucide-react";
 
-import { getEffectiveImageMime } from "@/const/image-extensions";
+import { getEffectiveImageMime } from "@/const/image-extensions.const";
 import { formatBytes } from "@/utils/image/compressors/formatBytes";
 import { probeCanvasMime } from "@/utils/image/converters/probeCanvasMime";
 import { imageDataToBmpBlob } from "@/utils/image/converters/imageDataToBmpBlob";
@@ -31,7 +31,7 @@ import { Badge } from "@/components/ui/badge";
 import { Toaster } from "@/components/ui/toaster";
 import { toast } from "@/store/toastStore";
 import { cn } from "@/lib/utils";
-import type { CropSettings } from "@/types";
+import type { CropSettings } from "@/types/index.types";
 import cropImageFromPreview from "@/components/global/image-cropper/cropImageFromPreview";
 import CropImage from "@/components/global/image-cropper/CropImage";
 import { withExtension } from "@/components/image/batch-compressor/loadImage";

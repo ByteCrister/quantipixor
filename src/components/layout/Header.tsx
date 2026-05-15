@@ -12,7 +12,9 @@ import {
   ChevronDown,
   Maximize2,
   Layers,
-  Code2,
+  Braces,
+  FlaskConical,
+  UserRound,
 } from "lucide-react";
 import QuantipixorIcon from "@/components/global/QuantipixorIcon";
 import { cn } from "@/lib/utils";
@@ -204,8 +206,8 @@ function ApiDropdown({ onNavigate }: { onNavigate: (route: string) => void }) {
             : "border-black/20 bg-transparent text-foreground/80 hover:border-[#1856FF]/50 hover:bg-[#1856FF]/5 hover:text-[#1856FF] dark:border-white/20 dark:text-white/70 dark:hover:border-white/40 dark:hover:bg-white/5 dark:hover:text-white"
         )}
       >
-        <Code2 className="h-4 w-4" />
-        <span>API</span>
+        <FlaskConical className="h-4 w-4" />
+        <span>MOCK</span>
         <motion.span
           animate={{ rotate: open ? 180 : 0 }}
           transition={{ duration: 0.2, ease: "easeInOut" }}
@@ -237,6 +239,7 @@ function ApiDropdown({ onNavigate }: { onNavigate: (route: string) => void }) {
               }}
             />
             <div className="p-1.5">
+
               <button
                 type="button"
                 onClick={() => {
@@ -257,7 +260,7 @@ function ApiDropdown({ onNavigate }: { onNavigate: (route: string) => void }) {
                     "dark:border-white/8 dark:bg-white/4 dark:text-white/50 dark:group-hover:border-[#1856FF]/30 dark:group-hover:bg-[#1856FF]/10 dark:group-hover:text-blue-300"
                   )}
                 >
-                  <Code2 className="h-4 w-4" />
+                  <UserRound className="h-4 w-4" />
                 </span>
                 <span className="flex min-w-0 flex-col">
                   <span className="text-sm font-semibold leading-tight">Mock Profile</span>
@@ -266,6 +269,37 @@ function ApiDropdown({ onNavigate }: { onNavigate: (route: string) => void }) {
                   </span>
                 </span>
               </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  onNavigate("/mock/json-viewer");
+                  setOpen(false);
+                }}
+                className={cn(
+                  "group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-all duration-150",
+                  "text-foreground/80 hover:bg-[#1856FF]/6 hover:text-[#1856FF]",
+                  "dark:text-white/70 dark:hover:bg-white/6 dark:hover:text-white",
+                  "focus-visible:outline-none focus-visible:bg-[#1856FF]/6"
+                )}
+              >
+                <span
+                  className={cn(
+                    "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border transition-colors duration-150",
+                    "border-black/8 bg-black/3 text-foreground/60 group-hover:border-[#1856FF]/25 group-hover:bg-[#1856FF]/8 group-hover:text-[#1856FF]",
+                    "dark:border-white/8 dark:bg-white/4 dark:text-white/50 dark:group-hover:border-[#1856FF]/30 dark:group-hover:bg-[#1856FF]/10 dark:group-hover:text-blue-300"
+                  )}
+                >
+                  <Braces className="h-4 w-4" />
+                </span>
+                <span className="flex min-w-0 flex-col">
+                  <span className="text-sm font-semibold leading-tight">JSON Viewer</span>
+                  <span className="text-[11px] font-normal text-foreground/45 group-hover:text-[#1856FF]/60 dark:text-white/35 dark:group-hover:text-blue-300/60">
+                    View and format JSON data
+                  </span>
+                </span>
+              </button>
+
             </div>
             <div
               className="pointer-events-none absolute inset-x-0 bottom-0 h-px"
@@ -483,11 +517,25 @@ const Header: React.FC = () => {
               className={cn(mobileNavItem, "flex items-center gap-3")}
             >
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-black/8 bg-black/3 text-foreground/60 dark:border-white/8 dark:bg-white/4 dark:text-white/50">
-                <Code2 className="h-4 w-4" />
+                <UserRound className="h-4 w-4" />
               </span>
               <span className="flex flex-col items-start">
                 <span className="text-sm font-semibold leading-tight">Mock Profile</span>
                 <span className="text-[11px] text-foreground/45 dark:text-white/35">View mock profile page</span>
+              </span>
+            </button>
+            <button
+              onClick={() => navigate("/mock/json-viewer")}
+              className={cn(mobileNavItem, "flex items-center gap-3")}
+            >
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-black/8 bg-black/3 text-foreground/60 dark:border-white/8 dark:bg-white/4 dark:text-white/50">
+                <Braces className="h-4 w-4" />
+              </span>
+              <span className="flex flex-col items-start">
+                <span className="text-sm font-semibold leading-tight">JSON Viewer</span>
+                <span className="text-[11px] text-foreground/45 dark:text-white/35">
+                  View and format JSON data
+                </span>
               </span>
             </button>
           </nav>

@@ -3,15 +3,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import mongoose from 'mongoose';
 import ConnectDB from '@/config/db';
-import { checkRateLimit } from '@/lib/checkRateLimit'; // adjust path as needed
 import { ProfileModel } from '@/model/ProfileModel';
-import { GeneratedProfile } from '@/types/mock-profile';
-import { COUNTRIES, LOCALES } from '@/const/mock-profile';
+import { GeneratedProfile } from '@/types/mock-profile.types';
+import { COUNTRIES, LOCALES } from '@/const/mock-profiles.const';
+import { checkProfileRateLimit } from '@/lib/checkProfileRateLimit';
 
 // Maximum number of profiles to return
 const MAX_COUNT = 15;
-const RATE_LIMIT_PURPOSE = 'profiles-api';
-
 /**
  * Extracts a stable user identifier from the request.
  * Falls back to IP address if no authentication is present.
@@ -35,12 +33,12 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
         // --- Rate limiting ---
         const userId = getUserIdFromRequest(request);
-        const isAllowed = await checkRateLimit(RATE_LIMIT_PURPOSE, userId, 'minute');
+        const { allowed, limit } = await checkProfileRateLimit(request, userId);
 
-        if (!isAllowed) {
+        if (!allowed) {
             return NextResponse.json(
-                { error: 'Too many requests. Please try again later.' },
-                { status: 429 }
+                { error: `Rate limit exceeded. Max ${limit} requests per minute.` },
+                { status: 429, headers: { "X-RateLimit-Limit": limit.toString(), "X-RateLimit-Remaining": "0" } }
             );
         }
 
@@ -48,7 +46,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         const { searchParams } = new URL(request.url);
 
         const countryParam = searchParams.get('country') ?? undefined;
-        const languageParam = searchParams.get('language') ?? undefined;
         const genderParam = searchParams.get('gender') ?? undefined;
         const countParam = searchParams.get('count') ?? '15';
 
@@ -68,16 +65,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
                 );
             }
             filter.combinationCountry = countryParam;
-        }
-
-        if (languageParam && languageParam.toLowerCase() !== 'random') {
-            if (!(LOCALES as readonly string[]).includes(languageParam)) {
-                return NextResponse.json(
-                    { error: `Invalid language: ${languageParam}. Allowed: ${LOCALES.join(', ')}` },
-                    { status: 400 }
-                );
-            }
-            filter.combinationLocale = languageParam;
         }
 
         if (genderParam && genderParam.toLowerCase() !== 'random') {

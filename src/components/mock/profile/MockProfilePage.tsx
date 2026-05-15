@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
 import { COUNTRIES } from "@/const/mock-profiles.const";
 import type { GeneratedProfile } from "@/types/mock-profile.types";
@@ -40,14 +40,9 @@ import {
   Building2,
   Heart,
 } from "lucide-react";
+import { useProfileStore } from "@/store/useProfileStore";
 
 type Gender = "male" | "female" | "random";
-type FilterState = {
-  country: string;
-  language: string;
-  gender: Gender;
-  count: number;
-};
 
 const MAX_COUNT = 15;
 
@@ -420,51 +415,7 @@ function CopyAllButton({ profiles }: { profiles: GeneratedProfile[] }) {
 // Main Component
 // -------------------------------------------------------------------
 export default function ProfileGenerator() {
-  const [filters, setFilters] = useState<FilterState>({
-    country: "random",
-    language: "random",
-    gender: "random",
-    count: 10,
-  });
-  const [profiles, setProfiles] = useState<GeneratedProfile[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [hasFetched, setHasFetched] = useState(false);
-  const abortControllerRef = useRef<AbortController | null>(null);
-
-  const fetchProfiles = useCallback(async () => {
-    if (abortControllerRef.current) abortControllerRef.current.abort();
-    const controller = new AbortController();
-    abortControllerRef.current = controller;
-    setLoading(true);
-
-    const params = new URLSearchParams();
-    if (filters.country !== "random") params.append("country", filters.country);
-    if (filters.language !== "random") params.append("language", filters.language);
-    if (filters.gender !== "random") params.append("gender", filters.gender);
-    params.append("count", filters.count.toString());
-
-    try {
-      const res = await fetch(`/api/v1/mock/profiles?${params}`, { signal: controller.signal });
-      if (!res.ok) {
-        const data = await res.json();
-        toast({ variant: "error", title: "Error", message: data?.error ?? "Failed to generate profiles." });
-        return;
-      }
-      const data: GeneratedProfile[] = await res.json();
-      setProfiles(data);
-      setHasFetched(true);
-      toast({ variant: "success", message: `${data.length} profiles generated!` });
-    } catch (err) {
-      if (err instanceof Error && err.name === "AbortError") return;
-      toast({ variant: "error", title: "Network error", message: "Could not reach the server." });
-    } finally {
-      setLoading(false);
-      abortControllerRef.current = null;
-    }
-  }, [filters]);
-
-  const handleFilterChange = (key: keyof FilterState, value: string | number) =>
-    setFilters((prev) => ({ ...prev, [key]: value }));
+  const { filters, profiles, loading, hasFetched, setFilter, fetchProfiles } = useProfileStore();
 
   return (
     <div
@@ -524,7 +475,7 @@ export default function ProfileGenerator() {
               <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-white/45">
                 <Globe className="w-3.5 h-3.5" /> Country
               </label>
-              <Select value={filters.country} onValueChange={(v) => handleFilterChange("country", v)}>
+              <Select value={filters.country} onValueChange={(v) => setFilter("country", v)}>
                 <SelectTrigger className="border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 text-gray-900 dark:text-white focus:ring-blue-500/40 h-10">
                   <SelectValue placeholder="Random" />
                 </SelectTrigger>
@@ -540,7 +491,7 @@ export default function ProfileGenerator() {
               <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-white/45">
                 <UserRound className="w-3.5 h-3.5" /> Gender
               </label>
-              <Select value={filters.gender} onValueChange={(v) => handleFilterChange("gender", v as Gender)}>
+              <Select value={filters.gender} onValueChange={(v) => setFilter("gender", v as Gender)}>
                 <SelectTrigger className="border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 text-gray-900 dark:text-white focus:ring-blue-500/40 h-10">
                   <SelectValue placeholder="Random" />
                 </SelectTrigger>
@@ -563,7 +514,7 @@ export default function ProfileGenerator() {
                 max={MAX_COUNT}
                 step={1}
                 value={[filters.count]}
-                onValueChange={([v]) => handleFilterChange("count", v)}
+                onValueChange={([v]) => setFilter("count", v)}
                 className="mt-1"
               />
               <div className="flex justify-between text-[10px] text-gray-400 dark:text-white/25 font-mono">

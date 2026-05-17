@@ -515,7 +515,11 @@ export default function ProfileGenerator() {
                 step={1}
                 value={[filters.count]}
                 onValueChange={([v]) => setFilter("count", v)}
-                className="mt-1"
+                className="mt-1
+              **:data-[slot=slider-range]:bg-blue-600! 
+              dark:**:data-[slot=slider-range]:bg-blue-400!
+              **:data-[slot=slider-thumb]:border-blue-600! 
+              dark:**:data-[slot=slider-thumb]:border-blue-400!"
               />
               <div className="flex justify-between text-[10px] text-gray-400 dark:text-white/25 font-mono">
                 <span>1</span>

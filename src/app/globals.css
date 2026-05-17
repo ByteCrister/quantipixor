@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+html.lenis {
+  height: auto;
+}
 
 /* ── Design tokens (glassmorphism / enterprise — see CLAUDE.md) ─────────────── */
 :root {

@@ -1,4 +1,4 @@
-import ImageResizerPage from "@/components/image/resize/ImageResizerPage";
+import ImageResizerPage from "@/components/image/resizer/ImageResizerPage";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {

@@ -15,6 +15,7 @@ import {
   Braces,
   FlaskConical,
   UserRound,
+  CreditCard, // <-- added for Stripe Test Customers
 } from "lucide-react";
 import QuantipixorIcon from "@/components/global/QuantipixorIcon";
 import { cn } from "@/lib/utils";
@@ -170,8 +171,8 @@ function MoreDropdown({ onNavigate }: { onNavigate: (route: string) => void }) {
   );
 }
 
-// ─── API Dropdown (single page navigation) ────────────────────────────────────
-function ApiDropdown({ onNavigate }: { onNavigate: (route: string) => void }) {
+// ─── Mock Dropdown (was API Dropdown) ─────────────────────────────────────────
+function MockDropdown({ onNavigate }: { onNavigate: (route: string) => void }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -239,7 +240,6 @@ function ApiDropdown({ onNavigate }: { onNavigate: (route: string) => void }) {
               }}
             />
             <div className="p-1.5">
-
               <button
                 type="button"
                 onClick={() => {
@@ -300,6 +300,36 @@ function ApiDropdown({ onNavigate }: { onNavigate: (route: string) => void }) {
                 </span>
               </button>
 
+              {/* NEW: Stripe Test Customers */}
+              <button
+                type="button"
+                onClick={() => {
+                  onNavigate("/mock/stripe-test-customers");
+                  setOpen(false);
+                }}
+                className={cn(
+                  "group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-all duration-150",
+                  "text-foreground/80 hover:bg-[#1856FF]/6 hover:text-[#1856FF]",
+                  "dark:text-white/70 dark:hover:bg-white/6 dark:hover:text-white",
+                  "focus-visible:outline-none focus-visible:bg-[#1856FF]/6"
+                )}
+              >
+                <span
+                  className={cn(
+                    "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border transition-colors duration-150",
+                    "border-black/8 bg-black/3 text-foreground/60 group-hover:border-[#1856FF]/25 group-hover:bg-[#1856FF]/8 group-hover:text-[#1856FF]",
+                    "dark:border-white/8 dark:bg-white/4 dark:text-white/50 dark:group-hover:border-[#1856FF]/30 dark:group-hover:bg-[#1856FF]/10 dark:group-hover:text-blue-300"
+                  )}
+                >
+                  <CreditCard className="h-4 w-4" />
+                </span>
+                <span className="flex min-w-0 flex-col">
+                  <span className="text-sm font-semibold leading-tight">Stripe Test Customers</span>
+                  <span className="text-[11px] font-normal text-foreground/45 group-hover:text-[#1856FF]/60 dark:text-white/35 dark:group-hover:text-blue-300/60">
+                    Create test Stripe customers & payment methods
+                  </span>
+                </span>
+              </button>
             </div>
             <div
               className="pointer-events-none absolute inset-x-0 bottom-0 h-px"
@@ -330,7 +360,9 @@ const Header: React.FC = () => {
 
   useEffect(() => {
     document.body.style.overflow = mobileMenuOpen ? "hidden" : "";
-    return () => { document.body.style.overflow = ""; };
+    return () => {
+      document.body.style.overflow = "";
+    };
   }, [mobileMenuOpen]);
 
   const navigate = (route: string) => {
@@ -353,7 +385,7 @@ const Header: React.FC = () => {
           "dark:bg-[color-mix(in_srgb,var(--surface)_45%,transparent)] dark:supports-backdrop-filter:bg-[color-mix(in_srgb,var(--surface)_38%,transparent)]",
           scrolled
             ? "border-[#1856FF]/15 shadow-[0_12px_40px_-12px_rgba(24,86,255,0.2)] dark:border-white/10 dark:shadow-[0_12px_48px_-12px_rgba(0,0,0,0.55)]"
-            : "border-black/6 shadow-[inset_0_1px_0_0_var(--glass-highlight)] dark:border-white/8",
+            : "border-black/6 shadow-[inset_0_1px_0_0_var(--glass-highlight)] dark:border-white/8"
         )}
       >
         <div
@@ -408,8 +440,8 @@ const Header: React.FC = () => {
               {/* Tools dropdown */}
               <MoreDropdown onNavigate={navigate} />
 
-              {/* API dropdown — now navigates to a page */}
-              <ApiDropdown onNavigate={navigate} />
+              {/* Mock dropdown */}
+              <MockDropdown onNavigate={navigate} />
 
               {/* Primary CTA */}
               <button
@@ -449,14 +481,14 @@ const Header: React.FC = () => {
       <div
         className={cn(
           "fixed inset-0 z-50 transition-all duration-300 md:hidden",
-          mobileMenuOpen ? "pointer-events-auto" : "pointer-events-none",
+          mobileMenuOpen ? "pointer-events-auto" : "pointer-events-none"
         )}
       >
         {/* Backdrop */}
         <div
           className={cn(
             "absolute inset-0 bg-black/30 backdrop-blur-sm transition-opacity duration-300 dark:bg-black/50",
-            mobileMenuOpen ? "opacity-100" : "opacity-0",
+            mobileMenuOpen ? "opacity-100" : "opacity-0"
           )}
           onClick={() => setMobileMenuOpen(false)}
         />
@@ -467,7 +499,7 @@ const Header: React.FC = () => {
             "absolute right-0 top-0 flex h-full w-80 flex-col backdrop-blur-2xl transition-transform duration-300 ease-out",
             "bg-[color-mix(in_srgb,var(--surface)_98%,transparent)] border-l border-black/10 shadow-2xl",
             "dark:bg-[color-mix(in_srgb,var(--surface)_95%,transparent)] dark:border-white/10",
-            mobileMenuOpen ? "translate-x-0" : "translate-x-full",
+            mobileMenuOpen ? "translate-x-0" : "translate-x-full"
           )}
         >
           {/* Drawer header */}
@@ -489,8 +521,12 @@ const Header: React.FC = () => {
 
           {/* Drawer nav */}
           <nav className="flex-1 space-y-1 overflow-y-auto p-4" aria-label="Mobile navigation">
-            <button onClick={() => navigate("/about")} className={mobileNavItem}>About</button>
-            <button onClick={() => navigate("/help")} className={mobileNavItem}>Help</button>
+            <button onClick={() => navigate("/about")} className={mobileNavItem}>
+              About
+            </button>
+            <button onClick={() => navigate("/help")} className={mobileNavItem}>
+              Help
+            </button>
 
             <div className="my-2 h-px bg-black/8 dark:bg-white/8" />
 
@@ -505,12 +541,14 @@ const Header: React.FC = () => {
                 </span>
                 <span className="flex flex-col items-start">
                   <span className="text-sm font-semibold leading-tight">{item.label}</span>
-                  <span className="text-[11px] text-foreground/45 dark:text-white/35">{item.description}</span>
+                  <span className="text-[11px] text-foreground/45 dark:text-white/35">
+                    {item.description}
+                  </span>
                 </span>
               </button>
             ))}
 
-            {/* ── Mobile: API page navigation ── */}
+            {/* ── Mobile: Mock page navigation ── */}
             <div className="my-2 h-px bg-black/8 dark:bg-white/8" />
             <button
               onClick={() => navigate("/mock/profile")}
@@ -521,7 +559,9 @@ const Header: React.FC = () => {
               </span>
               <span className="flex flex-col items-start">
                 <span className="text-sm font-semibold leading-tight">Mock Profile</span>
-                <span className="text-[11px] text-foreground/45 dark:text-white/35">View mock profile page</span>
+                <span className="text-[11px] text-foreground/45 dark:text-white/35">
+                  View mock profile page
+                </span>
               </span>
             </button>
             <button
@@ -535,6 +575,21 @@ const Header: React.FC = () => {
                 <span className="text-sm font-semibold leading-tight">JSON Viewer</span>
                 <span className="text-[11px] text-foreground/45 dark:text-white/35">
                   View and format JSON data
+                </span>
+              </span>
+            </button>
+            {/* NEW: Stripe Test Customers (mobile) */}
+            <button
+              onClick={() => navigate("/mock/stripe-test-customers")}
+              className={cn(mobileNavItem, "flex items-center gap-3")}
+            >
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-black/8 bg-black/3 text-foreground/60 dark:border-white/8 dark:bg-white/4 dark:text-white/50">
+                <CreditCard className="h-4 w-4" />
+              </span>
+              <span className="flex flex-col items-start">
+                <span className="text-sm font-semibold leading-tight">Stripe Test Customers</span>
+                <span className="text-[11px] text-foreground/45 dark:text-white/35">
+                  Create test Stripe customers & payment methods
                 </span>
               </span>
             </button>

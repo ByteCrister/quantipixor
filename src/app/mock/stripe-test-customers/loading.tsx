@@ -1,8 +1,8 @@
-import Loading from '@/components/global/Loading'
+import StripePageSkeleton from "@/components/mock/stripe-test-customers/StripePageSkeleton";
 
 const loading = () => {
   return (
-    <Loading />
+    <StripePageSkeleton />
   )
 }
 

@@ -1,8 +1,8 @@
-import Loading from '@/components/global/Loading'
+import ImageResizerSkeleton from "@/components/image/resizer/ImageResizerSkeleton";
 
 const loading = () => {
   return (
-    <Loading />
+    <ImageResizerSkeleton />
   )
 }
 

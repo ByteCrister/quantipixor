@@ -1,8 +1,8 @@
-import Loading from '@/components/global/Loading'
+import FaviconGeneratorSkeleton from "@/components/image/generate-favicon/FaviconGeneratorSkeleton";
 
 const loading = () => {
   return (
-    <Loading />
+    <FaviconGeneratorSkeleton />
   )
 }
 

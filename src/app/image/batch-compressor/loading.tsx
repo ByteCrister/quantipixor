@@ -1,8 +1,8 @@
-import Loading from '@/components/global/Loading'
+import BatchCompressorSkeleton from "@/components/image/batch-compressor/BatchCompressorSkeleton";
 
 const loading = () => {
   return (
-    <Loading />
+    <BatchCompressorSkeleton />
   )
 }
 

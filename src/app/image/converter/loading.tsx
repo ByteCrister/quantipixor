@@ -1,8 +1,8 @@
-import Loading from '@/components/global/Loading'
+import ImageConverterSkeleton from "@/components/image/converter/ImageConverterSkeleton";
 
 const loading = () => {
   return (
-    <Loading />
+    <ImageConverterSkeleton />
   )
 }
 

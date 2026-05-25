@@ -1,8 +1,8 @@
-import Loading from '@/components/global/Loading'
+import RemoveBgSkeleton from "@/components/image/remove-bg/RemoveBgSkeleton";
 
 const loading = () => {
   return (
-    <Loading />
+    <RemoveBgSkeleton />
   )
 }
 

@@ -1,8 +1,8 @@
-import Loading from '@/components/global/Loading'
+import JsonViewerSkeleton from "@/components/mock/json-viewer/JsonViewerSkeleton";
 
 const loading = () => {
   return (
-    <Loading />
+    <JsonViewerSkeleton />
   )
 }
 

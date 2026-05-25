@@ -1,8 +1,8 @@
-import Loading from '@/components/global/Loading'
+import ProfileGeneratorSkeleton from "@/components/mock/profile/ProfileGeneratorSkeleton";
 
 const loading = () => {
   return (
-    <Loading />
+    <ProfileGeneratorSkeleton />
   )
 }
 

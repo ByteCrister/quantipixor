@@ -8,7 +8,7 @@ env.allowLocalModels = false;
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { Toaster } from "@/components/ui/toaster";
-import { jetbrainsMono, plusJakarta } from "@/fonts/google-fonts";
+import { jetbrainsMono, plusJakarta } from "@/styles/google-fonts";
 import { Geist } from "next/font/google";
 import { cn } from "@/lib/utils";
 import SmoothScroll from "@/components/global/SmoothScroll";

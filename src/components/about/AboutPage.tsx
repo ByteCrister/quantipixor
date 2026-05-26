@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 
 import { SOCIAL_LINKS } from "@/const/social-links.const";
-import { inter, jetbrainsMono, plusJakarta } from "@/fonts/google-fonts";
+import { inter, jetbrainsMono, plusJakarta } from "@/styles/google-fonts";
 
 
 // ── Animation helpers (enhanced) ──────────────────────────────────────────────

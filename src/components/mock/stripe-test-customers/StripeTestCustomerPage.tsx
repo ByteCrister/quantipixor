@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Toaster } from "@/components/ui/toaster";
-import { plusJakarta, jetbrainsMono } from "@/fonts/google-fonts";
+import { plusJakarta, jetbrainsMono } from "@/styles/google-fonts";
 import { toast } from "@/store/toastStore";
 import { useStripeStore } from "@/store/stripeStore";
 import AddCardForm from "./AddCardForm";

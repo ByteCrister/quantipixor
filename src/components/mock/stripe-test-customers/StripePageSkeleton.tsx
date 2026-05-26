@@ -1,6 +1,6 @@
 "use client";
 
-import { plusJakarta, jetbrainsMono } from "@/fonts/google-fonts";
+import { plusJakarta, jetbrainsMono } from "@/styles/google-fonts";
 
 export default function StripePageSkeleton() {
     return (

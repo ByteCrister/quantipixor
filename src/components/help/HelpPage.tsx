@@ -20,7 +20,7 @@ import {
     CheckCircle2,
     ArrowRight,
 } from "lucide-react";
-import { inter, spaceGrotesk } from "@/fonts/google-fonts";
+import { inter, spaceGrotesk } from "@/styles/google-fonts";
 
 
 // ── Enhanced Animation Variants ────────────────────────────────────────────────

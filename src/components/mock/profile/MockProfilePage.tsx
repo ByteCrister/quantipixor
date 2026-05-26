@@ -5,7 +5,7 @@ import { motion, AnimatePresence, type Variants } from "framer-motion";
 import { COUNTRIES } from "@/const/mock-profiles.const";
 import type { GeneratedProfile } from "@/types/mock-profile.types";
 import { toast } from "@/store/toastStore";
-import { plusJakarta, jetbrainsMono } from "@/fonts/google-fonts";
+import { plusJakarta, jetbrainsMono } from "@/styles/google-fonts";
 import { Toaster } from "@/components/ui/toaster";
 import { Button } from "@/components/ui/button";
 import {

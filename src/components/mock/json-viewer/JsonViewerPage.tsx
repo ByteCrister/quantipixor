@@ -34,7 +34,7 @@ import {
   jetbrainsMono,
   inter,
   spaceGrotesk,
-} from "@/fonts/google-fonts";
+} from "@/styles/google-fonts";
 import { useFuseSearch } from "@/hooks/useFuseSearch";
 import ResultsSection from "./ResultsSection";
 import { useJsonStore } from "@/store/useJsonStore";

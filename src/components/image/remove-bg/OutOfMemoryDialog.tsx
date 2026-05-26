@@ -10,7 +10,7 @@ import {
     DialogDescription,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { plusJakarta } from "@/fonts/google-fonts";
+import { plusJakarta } from "@/styles/google-fonts";
 
 interface OutOfMemoryDialogProps {
     open: boolean;

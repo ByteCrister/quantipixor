@@ -14,7 +14,8 @@ import { DiagramRenderer } from "./DiagramRenderer";
 import { TemplatesGallery } from "./TemplatesGallery";
 import { ExportPanel } from "./ExportPanel";
 import { useDiagramStore } from "@/store/diagramStore";
-import { DIAGRAM_TYPE_META, type DiagramType } from "@/types/diagram.types";
+import { DIAGRAM_TEMPLATES, DIAGRAM_TYPE_META, type DiagramType } from "@/types/diagram.types";
+import { toast } from "@/store/toastStore";
 
 const DIAGRAM_TYPES: DiagramType[] = ["erd", "usecase", "activity", "workflow", "sequence", "class"];
 
@@ -146,6 +147,15 @@ export function DiagramStudio() {
     }, [activeDiagramId, updateDiagram]);
 
     const handleTemplateSelect = useCallback((templateId: string) => {
+        const template = DIAGRAM_TEMPLATES.find(t => t.id === templateId);
+        if (!template) {
+            toast({ variant: "error", message: "Template not found." });
+            return;
+        }
+        if (!template.code || template.code.trim() === "") {
+            toast({ variant: "warning", message: `Template "${template.label}" has no code.` });
+            return;
+        }
         createFromTemplate(templateId);
         setSidebarTab("export");
     }, [createFromTemplate]);

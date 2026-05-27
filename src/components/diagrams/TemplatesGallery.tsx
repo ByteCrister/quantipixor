@@ -81,8 +81,32 @@ export function TemplatesGallery({ onSelect }: TemplatesGalleryProps) {
                 </div>
             </div>
 
-            {/* Template list */}
-            <div className="flex-1 overflow-y-auto p-3 space-y-2">
+            {/* Template list with minimal scrollbar */}
+            <div
+                className="flex-1 overflow-y-auto p-3 space-y-2"
+                style={{
+                    scrollbarWidth: "thin",
+                    scrollbarColor: `${COLORS.neutral300} transparent`,
+                }}
+            >
+                <style>
+                    {`
+                        .overflow-y-auto::-webkit-scrollbar {
+                            width: 6px;
+                            height: 6px;
+                        }
+                        .overflow-y-auto::-webkit-scrollbar-track {
+                            background: transparent;
+                        }
+                        .overflow-y-auto::-webkit-scrollbar-thumb {
+                            background: #cbd5e1;
+                            border-radius: 8px;
+                        }
+                        .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+                            background: #94a3b8;
+                        }
+                    `}
+                </style>
                 {filtered.map((tpl) => {
                     const Icon = ICON_MAP[tpl.icon] ?? Layers;
                     const meta = DIAGRAM_TYPE_META[tpl.type];

@@ -174,26 +174,20 @@ endif
 
 :Enter Shipping Address;
 
-fork
-  :Validate Address;
-fork again
-  :Calculate Shipping Cost;
-end fork
-
 if (Address valid?) then (no)
   :Show validation error;
   :Re-enter Address;
-  goto :Enter Shipping Address;
+  -> :Enter Shipping Address;
 else (yes)
   :Select Payment Method;
 endif
 
-if (Payment Method) then (Credit Card)
+if (Payment Method == Credit Card) then (yes)
   :Enter Card Details;
   :3D Secure Check;
-else if (Payment Method) then (PayPal)
+elseif (Payment Method == PayPal) then (yes)
   :Redirect to PayPal;
-else (Crypto)
+else
   :Show Wallet Address;
 endif
 
@@ -206,12 +200,14 @@ if (Confirm Order?) then (yes)
     :Send Confirmation Email;
     :Update Inventory;
     :Show Success Page;
-  else (failed)
+  else
     :Show Payment Error;
     :Retry or Change Method;
+    -> :Select Payment Method;
   endif
 else (cancel)
   :Return to Cart;
+  stop
 endif
 
 stop

@@ -8,6 +8,12 @@ declare global {
         connection: Connection | null;
         promise: Promise<Connection> | null;
     };
+    // Browser global augmentation for PlantUML compression library
+    interface Window {
+        RawDeflate: {
+            deflate: (data: string) => string;
+        };
+    }
 }
 
 export { };

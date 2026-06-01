@@ -12,23 +12,33 @@ import {
   SiTypescript,
   SiTailwindcss,
   SiFramer,
+  SiRadixui,
+  SiHuggingface,
+  SiOpenai,
+  SiVercel,
+  SiMongodb,
+  SiStripe,
+  SiGoogle,
 } from "react-icons/si";
+import { LuDatabase } from "react-icons/lu";
 import {
   Shield,
-  Zap,
-  Layers,
   FileImage,
-  Download,
-  ScanSearch,
-  Sliders,
-  HardDrive,
+  ArrowLeftRight,
+  Eraser,
+  ScanText,
+  Globe,
+  Maximize,
+  Code2,
+  Users,
+  CreditCard,
+  GitBranch,
 } from "lucide-react";
 
 import { SOCIAL_LINKS } from "@/const/social-links.const";
 import { inter, jetbrainsMono, plusJakarta } from "@/styles/google-fonts";
 
-
-// ── Animation helpers (enhanced) ──────────────────────────────────────────────
+// ── Animation helpers (unchanged) ────────────────────────────────────────────
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 30 },
   whileInView: { opacity: 1, y: 0 },
@@ -56,47 +66,57 @@ const staggerItem: Variants = {
   show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } },
 };
 
-// ── Data (unchanged) ──────────────────────────────────────────────────────────
-const FEATURES = [
-  {
-    icon: Shield,
-    label: "100% Client‑Side",
-    desc: "All compression runs in your browser via Canvas API. Your images never touch a server.",
-  },
-  {
-    icon: Layers,
-    label: "Batch Processing",
-    desc: "Upload up to 20 images at once, queue up to 50 total across multiple sessions.",
-  },
-  {
-    icon: Download,
-    label: "ZIP Download",
-    desc: "Images are organised into batch‑N sub‑folders inside a single, clean ZIP archive.",
-  },
-  {
-    icon: ScanSearch,
-    label: "Duplicate Detection",
-    desc: "SHA‑256 hashing prevents adding the same image twice — silently and instantly.",
-  },
-  {
-    icon: Sliders,
-    label: "Configurable Quality",
-    desc: "Fine‑tune compression with a quality slider from 0.2 to 0.8 (default 0.7).",
-  },
-  {
-    icon: HardDrive,
-    label: "Max File Size",
-    desc: "Individual files capped at 15 MB. Oversized files are rejected with clear feedback.",
-  },
+// ── Updated data: tools replacing the old compressor-only features ────────────
+const TOOLS = [
   {
     icon: FileImage,
-    label: "18 Input Formats",
-    desc: "JPG, PNG, WebP, AVIF, HEIC, GIF, BMP, SVG, TIFF, ICO and more.",
+    label: "Batch Image Compressor",
+    desc: "Compress JPG, PNG, WebP, AVIF and 14+ other formats in bulk with quality control, duplicate detection, and ZIP download — all client-side.",
   },
   {
-    icon: Zap,
-    label: "Custom Naming",
-    desc: "Set a base name and batch size to control how output files and folders are named.",
+    icon: ArrowLeftRight,
+    label: "Image Converter",
+    desc: "Convert between JPEG, PNG, WebP, AVIF and more formats with cropping via react-easy-crop.",
+  },
+  {
+    icon: Eraser,
+    label: "AI Background Removal",
+    desc: "Remove image backgrounds using on-device AI (@imgly) or server fallback via HuggingFace and Gradio.",
+  },
+  {
+    icon: ScanText,
+    label: "OCR Document Formatter",
+    desc: "Extract text with Google Gemini, OCR.Space, or Tesseract.js. Supports English, Bengali, Arabic, Hindi, Spanish. Export as .docx.",
+  },
+  {
+    icon: Globe,
+    label: "Favicon Generator",
+    desc: "Upload & crop an image, then server-side Sharp resizing and .ico packaging with multi-resolution output.",
+  },
+  {
+    icon: Maximize,
+    label: "Image Resizer",
+    desc: "Batch resize with aspect-ratio lock and presets for HD, Full HD, 4K, and social media sizes — 100% Canvas API.",
+  },
+  {
+    icon: Code2,
+    label: "JSON Viewer",
+    desc: "Paste or upload .json files; card-based interactive layout with Web Worker parsing and pagination.",
+  },
+  {
+    icon: Users,
+    label: "Random Profile Generator",
+    desc: "Generate realistic mock profiles (name, email, address, avatar) via /api/v1/mock/profiles backed by MongoDB.",
+  },
+  {
+    icon: CreditCard,
+    label: "Stripe Test Customer Tool",
+    desc: "Create Stripe test customers and attach payment methods using your own key (BYOK) — keys never stored.",
+  },
+  {
+    icon: GitBranch,
+    label: "Diagram Studio",
+    desc: "Mermaid & PlantUML diagram workspace with template gallery, localStorage persistence, and high-res exports.",
   },
 ];
 
@@ -106,26 +126,43 @@ const INPUT_FORMATS = [
   "AVIF", "TIFF", "TIF", "HEIC", "HEIF",
 ];
 
-const TECH_STACK = [
+const ALL_TECH = [
   { icon: SiNextdotjs, label: "Next.js 16" },
   { icon: SiReact, label: "React 19" },
-  { icon: SiTypescript, label: "TypeScript" },
-  { icon: SiTailwindcss, label: "Tailwind CSS" },
+  { icon: SiTypescript, label: "TypeScript 5" },
+  { icon: SiTailwindcss, label: "Tailwind CSS v4" },
   { icon: SiFramer, label: "Framer Motion" },
+  { icon: LuDatabase, label: "Zustand 5" },
+  { icon: SiRadixui, label: "Radix UI" },
+  { label: "react-easy-crop" },
+  { label: "JSZip" },
+  { label: "Sharp" },
+  { label: "to-ico / icojs" },
+  { label: "Tesseract.js" },
+  { icon: SiGoogle, label: "Google Gemini" },
+  { label: "@imgly/background-removal" },
+  { icon: SiHuggingface, label: "HuggingFace" },
+  { label: "Gradio" },
+  { icon: SiOpenai, label: "Groq SDK" },
+  { label: "Upstash Redis" },
+  { icon: SiVercel, label: "Vercel Blob" },
+  { icon: SiMongodb, label: "MongoDB" },
+  { icon: SiStripe, label: "Stripe" },
+  { label: "Mermaid.js" },
+  { label: "PlantUML" },
+  { label: "docx / html-docx-js" },
+  { label: "Plus Jakarta Sans" },
+  { label: "JetBrains Mono" },
 ];
 
 const SocialLinks = [
   { icon: SiGithub, label: "GitHub", href: SOCIAL_LINKS.GITHUB },
-  {
-    icon: SiLinkerd,
-    label: "LinkedIn",
-    href: SOCIAL_LINKS.LINKEDIN,
-  },
+  { icon: SiLinkerd, label: "LinkedIn", href: SOCIAL_LINKS.LINKEDIN },
   { icon: SiFacebook, label: "Facebook", href: SOCIAL_LINKS.FACEBOOK },
   { icon: SiInstagram, label: "Instagram", href: SOCIAL_LINKS.INSTAGRAM },
 ];
 
-// ── Enhanced GlassCard with hover animations ──────────────────────────────────
+// ── GlassCard & SectionLabel (unchanged) ──────────────────────────────────────
 const GlassCard: React.FC<{
   children: React.ReactNode;
   className?: string;
@@ -196,7 +233,6 @@ export default function AboutPage() {
           transition={{ duration: 25, repeat: Infinity, ease: "easeInOut", delay: 2 }}
           className="absolute -bottom-32 -right-32 h-105 w-105 rounded-full bg-linear-to-tl from-purple-500/20 via-pink-500/10 to-transparent blur-[90px] dark:from-purple-600/20 dark:via-pink-600/10"
         />
-        {/* Grid overlay */}
         <div
           className="absolute inset-0 opacity-[0.02] dark:opacity-[0.025]"
           style={{
@@ -211,7 +247,7 @@ export default function AboutPage() {
         {/* ── Hero Section ── */}
         <section className="mb-24 flex flex-col items-center text-center">
           <motion.div {...fadeIn(0)} className="mb-6">
-            <SectionLabel>v0.1.0 · MIT Licensed</SectionLabel>
+            <SectionLabel>MIT Licensed</SectionLabel>
           </motion.div>
 
           <motion.h1
@@ -232,11 +268,12 @@ export default function AboutPage() {
             {...fadeUp(0.16)}
             className="mb-10 max-w-xl text-base leading-relaxed text-gray-500 dark:text-white/50"
           >
-            Private batch image compression in your browser. No logins. No servers.
-            No compromise on privacy.
+            A privacy‑first multi‑tool suite — compress, convert, extract, diagram, and
+            generate mock data. Most processing stays in your browser; sensitive tasks
+            use secure, transient API routes.
           </motion.p>
 
-          {/* Stat pills with spring animation */}
+          {/* Stat pills */}
           <motion.div
             variants={staggerContainer}
             initial="hidden"
@@ -245,8 +282,8 @@ export default function AboutPage() {
             className="flex flex-wrap justify-center gap-3"
           >
             {[
+              ["10+", "Tools"],
               ["18+", "Input formats"],
-              ["50", "Max queue size"],
               ["0", "Data uploaded"],
               ["MIT", "Licensed"],
             ].map(([val, lbl]) => (
@@ -274,23 +311,25 @@ export default function AboutPage() {
             What it does
           </motion.h2>
           <motion.p {...fadeUp(0.14)} className="max-w-2xl text-base leading-relaxed text-gray-500 dark:text-white/50">
-            Quantipixor is a high‑performance, privacy‑first web tool that compresses JPG, PNG,
-            WebP, AVIF and 14+ other formats in bulk — entirely on your device. No uploads,
-            no servers. Compressed images are downloaded as a tidy ZIP archive.
+            Quantipixor blends client‑side canvas processing with secure serverless APIs to deliver
+            a wide array of tools — image editing, OCR, diagramming, and developer utilities —
+            without sacrificing privacy. Files are processed locally whenever possible; for features
+            that require server power (OCR, background removal, favicon generation, mock data),
+            data is transmitted transiently and never stored.
           </motion.p>
         </section>
 
-        {/* ── Features Grid (enhanced hover & stagger) ── */}
+        {/* ── Features / Tools Grid ── */}
         <section className="mb-24">
           <motion.div {...fadeUp(0)} className="mb-3">
             <SectionLabel>Features</SectionLabel>
           </motion.div>
           <motion.h2 {...fadeUp(0.06)} className="mb-10 font-['Plus_Jakarta_Sans'] text-3xl font-bold">
-            Key features
+            Every tool included
           </motion.h2>
 
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {FEATURES.map(({ icon: Icon, label, desc }, i) => (
+            {TOOLS.map(({ icon: Icon, label, desc }, i) => (
               <GlassCard key={label} delay={i * 0.05} hoverScale={1.03}>
                 <motion.div
                   whileHover={{ rotate: 5, scale: 1.1 }}
@@ -308,7 +347,7 @@ export default function AboutPage() {
           </div>
         </section>
 
-        {/* ── Supported Formats (with staggered animations) ── */}
+        {/* ── Supported Formats ── */}
         <section className="mb-24">
           <motion.div {...fadeUp(0)} className="mb-3">
             <SectionLabel>Formats</SectionLabel>
@@ -346,7 +385,7 @@ export default function AboutPage() {
           </motion.div>
         </section>
 
-        {/* ── Privacy Statement with hover shine ── */}
+        {/* ── Privacy Statement (updated) ── */}
         <section className="mb-24">
           <GlassCard className="relative overflow-hidden border-indigo-300/50 bg-linear-to-br from-indigo-50/50 to-purple-50/50 dark:border-indigo-500/30 dark:from-indigo-500/10 dark:to-purple-500/10">
             <motion.div
@@ -364,17 +403,20 @@ export default function AboutPage() {
               <div>
                 <h3 className="mb-2 font-['Plus_Jakarta_Sans'] text-lg font-semibold">Privacy Statement</h3>
                 <p className="text-sm leading-relaxed text-gray-600 dark:text-white/50">
-                  No images are uploaded to any server. Processing uses{" "}
-                  <code className="rounded bg-gray-200 px-1 py-0.5 font-mono text-xs text-gray-800 dark:bg-white/10 dark:text-white/80">FileReader</code>,{" "}
-                  <code className="rounded bg-gray-200 px-1 py-0.5 font-mono text-xs text-gray-800 dark:bg-white/10 dark:text-white/80">URL.createObjectURL</code>{" "}
-                  and canvas drawing locally. No cookies or tracking related to your image data.
+                  Image tools (compressor, converter, resizer) and JSON Viewer run entirely in your
+                  browser using the Canvas API, FileReader, and Web Workers — no data leaves your
+                  device. For OCR, background removal, favicon generation, and mock profiles,
+                  requests are sent to secure API routes over HTTPS. Transient data is processed in
+                  memory, with Upstash Redis rate limiting and Vercel Blob for temporary storage.
+                  Stripe test keys are held in‑memory only and never persisted. No cookies or
+                  tracking related to your data.
                 </p>
               </div>
             </div>
           </GlassCard>
         </section>
 
-        {/* ── Tech Stack (stagger + hover effects) ── */}
+        {/* ── Tech Stack (expanded) ── */}
         <section className="mb-24">
           <motion.div {...fadeUp(0)} className="mb-3">
             <SectionLabel>Tech Stack</SectionLabel>
@@ -390,7 +432,7 @@ export default function AboutPage() {
             viewport={{ once: true }}
             className="flex flex-wrap gap-3"
           >
-            {TECH_STACK.map(({ icon: Icon, label }) => (
+            {ALL_TECH.map(({ icon: Icon, label }) => (
               <motion.div
                 key={label}
                 variants={staggerItem}
@@ -402,24 +444,18 @@ export default function AboutPage() {
                 }}
                 className="flex cursor-default items-center gap-2 rounded-xl border border-gray-200 bg-gray-50/80 px-4 py-2.5 backdrop-blur-sm transition-all dark:border-white/[0.07] dark:bg-white/4"
               >
-                <Icon size={16} className="text-gray-600 dark:text-white/60" />
-                <span className="text-sm text-gray-700 dark:text-white/70">{label}</span>
-              </motion.div>
-            ))}
-            {["Zustand", "Radix UI", "JSZip", "Plus Jakarta Sans", "JetBrains Mono"].map((t) => (
-              <motion.div
-                key={t}
-                variants={staggerItem}
-                whileHover={{ y: -4, scale: 1.05 }}
-                className="flex cursor-default items-center gap-2 rounded-xl border border-gray-200 bg-gray-50/80 px-4 py-2.5 backdrop-blur-sm dark:border-white/[0.07] dark:bg-white/4"
-              >
-                <span className="text-sm text-gray-500 dark:text-white/50">{t}</span>
+                {Icon ? (
+                  <Icon size={16} className="text-gray-600 dark:text-white/60" />
+                ) : null}
+                <span className={`text-sm ${Icon ? "text-gray-700 dark:text-white/70" : "text-gray-500 dark:text-white/50"}`}>
+                  {label}
+                </span>
               </motion.div>
             ))}
           </motion.div>
         </section>
 
-        {/* ── Creator Section with social animations ── */}
+        {/* ── Creator Section (unchanged layout) ── */}
         <section className="mb-12">
           <motion.div {...fadeUp(0)} className="mb-3">
             <SectionLabel>Creator</SectionLabel>
@@ -439,7 +475,7 @@ export default function AboutPage() {
                 Sadiqul Islam Shakib
               </motion.p>
               <p className="text-sm text-gray-500 dark:text-white/40">
-                Open-source developer · MIT Licensed · v0.1.0
+                Open-source developer · MIT Licensed
               </p>
             </div>
 

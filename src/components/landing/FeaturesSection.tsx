@@ -5,10 +5,13 @@ import { motion, Variants } from "framer-motion";
 import { Sparkles } from "lucide-react";
 import {
   FaLayerGroup,
-  FaShieldAlt,
-  FaSlidersH,
-  FaFileImage,
-  FaInfinity,
+  FaExchangeAlt,
+  FaEraser,
+  FaFileAlt,
+  FaImage,
+  FaExpandArrowsAlt,
+  FaProjectDiagram,
+  FaFlask,
 } from "react-icons/fa";
 
 import { Badge } from "@/components/ui/badge";
@@ -23,7 +26,6 @@ const container: Variants = {
   },
 };
 
-// Hover animation for cards (spring-based for smoothness)
 const cardHover: Variants = {
   rest: { scale: 1, y: 0, boxShadow: "0 1px 3px 0 rgb(0 0 0 / 0.05)" },
   hover: {
@@ -45,40 +47,72 @@ const features = [
     accent: "from-[#1856FF]/25 to-[#1856FF]/5",
     ring: "ring-[#1856FF]/25",
     iconClass: "text-[#1856FF]",
-    title: "True Batch Processing",
-    description: "Compress hundreds of images at once — built for real workloads, not toy demos.",
+    title: "Batch Image Compressor",
+    description:
+      "Compress hundreds of images at once via the Canvas API — no uploads, no servers, up to 80% smaller files.",
   },
   {
-    icon: FaShieldAlt,
+    icon: FaExchangeAlt,
+    accent: "from-[#7C3AED]/25 to-[#7C3AED]/5",
+    ring: "ring-[#7C3AED]/25",
+    iconClass: "text-[#7C3AED] dark:text-[#c4b5fd]",
+    title: "Image Converter",
+    description:
+      "Convert between JPEG, PNG, WebP, AVIF, and Base64 — entirely in your browser with an interactive crop tool.",
+  },
+  {
+    icon: FaEraser,
     accent: "from-[#07CA6B]/25 to-[#07CA6B]/5",
     ring: "ring-[#07CA6B]/25",
     iconClass: "text-[#07CA6B]",
-    title: "Privacy First",
-    description: "Images never leave your device. No uploads, no servers — period.",
+    title: "AI Background Removal",
+    description:
+      "Remove backgrounds using on-device AI (@imgly) with a HuggingFace server-side fallback for maximum reliability.",
   },
   {
-    icon: FaSlidersH,
+    icon: FaFileAlt,
     accent: "from-[#E89558]/25 to-[#E89558]/5",
     ring: "ring-[#E89558]/30",
     iconClass: "text-[#c2410c] dark:text-[#fcd9a6]",
-    title: "Advanced Compression",
-    description: "Up to 80% smaller files with minimal visible quality loss — tuned for clarity.",
+    title: "OCR Document Formatter",
+    description:
+      "Extract text from images using Gemini, OCR.Space, or Tesseract.js. Export as .docx in 5 languages.",
   },
   {
-    icon: FaFileImage,
-    accent: "from-[#3A344E]/25 to-[#3A344E]/5",
-    ring: "ring-[#3A344E]/20",
-    iconClass: "text-[#3A344E] dark:text-[#e9e4ff]",
-    title: "Multi-Format Support",
-    description: "JPEG, PNG, WebP, and more — one flow for your whole library.",
+    icon: FaImage,
+    accent: "from-[#4F46E5]/25 to-[#4F46E5]/5",
+    ring: "ring-[#4F46E5]/25",
+    iconClass: "text-[#4F46E5] dark:text-[#a5b4fc]",
+    title: "Favicon Generator",
+    description:
+      "Upload any image, crop it, and generate a multi-resolution .ico favicon set via Sharp — production-ready in seconds.",
   },
   {
-    icon: FaInfinity,
+    icon: FaExpandArrowsAlt,
+    accent: "from-[#0D9488]/25 to-[#0D9488]/5",
+    ring: "ring-[#0D9488]/25",
+    iconClass: "text-[#0D9488] dark:text-[#5eead4]",
+    title: "Image Resizer",
+    description:
+      "Resize to exact dimensions with aspect-lock and presets for HD, Full HD, 4K, and social media — 100% client-side.",
+  },
+  {
+    icon: FaProjectDiagram,
     accent: "from-[#EA2143]/20 to-[#EA2143]/5",
     ring: "ring-[#EA2143]/20",
     iconClass: "text-[#EA2143] dark:text-[#fda4af]",
-    title: "No File Size Limits",
-    description: "Compress huge images freely — we don’t throttle your batches.",
+    title: "Diagram Studio",
+    description:
+      "Write Mermaid or PlantUML code and render ERDs, flowcharts, and sequence diagrams with local-first persistence.",
+  },
+  {
+    icon: FaFlask,
+    accent: "from-[#3A344E]/25 to-[#3A344E]/5",
+    ring: "ring-[#3A344E]/20",
+    iconClass: "text-[#3A344E] dark:text-[#e9e4ff]",
+    title: "Developer Mock Tools",
+    description:
+      "JSON Viewer with Web Worker parsing, Mock Profile Generator backed by MongoDB, and a Stripe Test Customer simulator.",
   },
 ] as const;
 
@@ -104,18 +138,19 @@ const FeaturesSection: React.FC = () => {
           className="mx-auto max-w-3xl text-center"
         >
           <Badge variant="default" className="font-mono text-[10px] tracking-[0.2em]">
-            Differentiation
+            Full Suite
           </Badge>
           <h2
             id="features-heading"
             className="mt-4 text-3xl font-bold tracking-tight text-[#141414] dark:text-white md:text-4xl lg:text-[2.5rem] lg:leading-tight"
           >
-            Why Quantipixor?
+            Everything You Need.
           </h2>
           <p className="mt-3 text-lg text-[#141414]/70 dark:text-white/65">
-            Features that set us apart — <span className="font-semibold text-[#1856FF] dark:text-[#a5c4ff]">bold</span>,{" "}
-            <span className="font-semibold text-[#3A344E] dark:text-white/85">precise</span>, and{" "}
-            <span className="font-semibold text-[#07CA6B]">trust-first</span>.
+            Ten tools. One platform. Built for{" "}
+            <span className="font-semibold text-[#1856FF] dark:text-[#a5c4ff]">speed</span>,{" "}
+            <span className="font-semibold text-[#3A344E] dark:text-white/85">privacy</span>, and{" "}
+            <span className="font-semibold text-[#07CA6B]">developer productivity</span>.
           </p>
         </motion.div>
 
@@ -133,7 +168,7 @@ const FeaturesSection: React.FC = () => {
                 key={feature.title}
                 className={cn(
                   "h-full min-h-0",
-                  idx === 4 && "sm:col-span-2 xl:col-span-2 xl:col-start-2",
+                  (idx === 6 || idx === 7) && "xl:col-span-2",
                 )}
                 initial="rest"
                 whileHover="hover"
@@ -144,7 +179,6 @@ const FeaturesSection: React.FC = () => {
                 <Card
                   className={cn(
                     "group h-full border-black/6 dark:border-white/10 motion-safe:transition-colors motion-safe:duration-200",
-                    // Border glow on hover (applied via motion li shadow, but we keep border transition)
                     "motion-safe:hover:border-[#1856FF]/30 dark:motion-safe:hover:border-[#1856FF]/40",
                   )}
                 >
@@ -198,12 +232,12 @@ const FeaturesSection: React.FC = () => {
               className="relative flex flex-col items-center gap-3 rounded-full border border-[#1856FF]/25 bg-[color-mix(in_srgb,var(--surface)_82%,transparent)] px-6 py-4 text-center shadow-[0_12px_40px_-18px_rgba(24,86,255,0.35)] backdrop-blur-xl transition-all duration-200 motion-safe:hover:scale-[1.01] motion-safe:hover:border-[#1856FF]/40 motion-safe:hover:shadow-[0_20px_40px_-18px_rgba(24,86,255,0.45)] dark:border-white/10 dark:bg-[color-mix(in_srgb,var(--surface)_55%,transparent)] sm:flex-row sm:text-left"
               whileHover={{ scale: 1.01, transition: { type: "spring", stiffness: 400, damping: 25 } }}
             >
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#1856FF]/12 text-[#1856FF] transition-all duration-200 motion-safe:group-hover:scale-105 dark:bg-[#1856FF]/25 dark:text-[#a5c4ff]">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#1856FF]/12 text-[#1856FF] transition-all duration-200 dark:bg-[#1856FF]/25 dark:text-[#a5c4ff]">
                 <Sparkles className="h-5 w-5" aria-hidden />
               </span>
               <p className="text-sm font-medium leading-relaxed text-[#141414]/80 dark:text-white/75 md:text-base">
-                Unlike competitors, Quantipixor offers{" "}
-                <span className="text-[#1856FF] dark:text-[#a5c4ff]">unlimited batch compression</span> with{" "}
+                Unlike scattered tools, Quantipixor gives you{" "}
+                <span className="text-[#1856FF] dark:text-[#a5c4ff]">everything in one place</span> with{" "}
                 <span className="text-[#07CA6B]">zero privacy trade-offs</span>.
               </p>
             </motion.div>

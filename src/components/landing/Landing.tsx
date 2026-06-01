@@ -1,14 +1,18 @@
 "use client";
 
-import React from 'react';
-import HeroSection from './HeroSection';
-import FeaturesSection from './FeaturesSection';
+import React from "react";
+import HeroSection from "./HeroSection";
+import FeaturesSection from "./FeaturesSection";
+import ToolsShowcaseSection from "./ToolsShowcaseSection";
+import CtaBannerSection from "./CtaBannerSection";
 
 const Landing: React.FC = () => {
   return (
     <main className="min-h-screen bg-background">
       <HeroSection />
       <FeaturesSection />
+      <ToolsShowcaseSection />
+      <CtaBannerSection />
     </main>
   );
 };

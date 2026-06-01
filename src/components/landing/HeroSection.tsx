@@ -2,8 +2,7 @@
 
 import React from "react";
 import { motion, Variants } from "framer-motion";
-import { ArrowRight, Sparkles, Upload } from "lucide-react";
-import { FaImages } from "react-icons/fa";
+import { ArrowRight, Sparkles, Layers, PanelsTopLeft } from "lucide-react";
 import { TypeAnimation } from "react-type-animation";
 
 import { Badge } from "@/components/ui/badge";
@@ -21,21 +20,21 @@ const fadeUp: Variants = {
 };
 
 const HeroSection: React.FC = () => {
-  const route = useRouter();
-  const handleStartUpload = () => {
-     route.push(`/image/batch-compressor`)
-  };
+  const router = useRouter();
+
+  const handleExploreTools = () => router.push("/image/batch-compressor");
+  const handleDiagramStudio = () => router.push("/diagrams");
 
   return (
     <section
       className="relative isolate overflow-hidden px-4 pb-20 pt-16 md:pb-28 md:pt-24"
       aria-labelledby="hero-heading"
     >
-      {/* Ambient glass layers — unchanged */}
+      {/* Ambient glass layers */}
       <div className="pointer-events-none absolute inset-0 -z-10" aria-hidden>
-        <div className="absolute -left-32 top-0 h-[420px] w-[420px] rounded-full bg-[#1856FF]/[0.14] blur-3xl dark:bg-[#1856FF]/20" />
-        <div className="absolute -right-24 top-24 h-[320px] w-[320px] rounded-full bg-[#3A344E]/18 blur-3xl dark:bg-[#3A344E]/25" />
-        <div className="absolute bottom-0 left-1/3 h-[200px] w-[200px] rounded-full bg-[#07CA6B]/12 blur-3xl" />
+        <div className="absolute -left-32 top-0 h-105 w-105 rounded-full bg-[#1856FF]/[0.14] blur-3xl dark:bg-[#1856FF]/20" />
+        <div className="absolute -right-24 top-24 h-80 w-[320px] rounded-full bg-[#3A344E]/18 blur-3xl dark:bg-[#3A344E]/25" />
+        <div className="absolute bottom-0 left-1/3 h-50 w-50 rounded-full bg-[#07CA6B]/12 blur-3xl" />
         <div className="absolute inset-0 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--background)_40%,transparent)_0%,transparent_45%)]" />
       </div>
 
@@ -49,16 +48,17 @@ const HeroSection: React.FC = () => {
           className="flex flex-wrap items-center justify-center gap-2"
         >
           <Badge variant="success" className="font-mono text-[10px] tracking-[0.16em]">
-            100% local
+            10+ Free Tools
           </Badge>
           <Badge variant="outline" className="font-mono text-[10px] tracking-[0.16em]">
-            No server uploads
+            100% Private
           </Badge>
           <Badge variant="secondary" className="hidden sm:inline-flex font-mono text-[10px] tracking-[0.16em]">
-            Enterprise-grade clarity
+            No Sign-up
           </Badge>
         </motion.div>
 
+        {/* Tagline pill */}
         <motion.div
           custom={1}
           initial="hidden"
@@ -68,10 +68,11 @@ const HeroSection: React.FC = () => {
         >
           <span className="inline-flex items-center gap-2 rounded-full border border-[#1856FF]/25 bg-[#1856FF]/8 px-4 py-1.5 text-xs font-medium text-[#1856FF] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.35)] backdrop-blur-md dark:text-[#a5c4ff]">
             <Sparkles className="h-3.5 w-3.5" aria-hidden />
-            Glassmorphism UI · WCAG-minded interactions
+            Image Tools · Developer Utilities · AI-Powered
           </span>
         </motion.div>
 
+        {/* H1 */}
         <motion.h1
           id="hero-heading"
           custom={2}
@@ -81,15 +82,15 @@ const HeroSection: React.FC = () => {
           className="mt-8 text-balance text-4xl font-extrabold tracking-tight text-[#141414] dark:text-white md:text-5xl lg:text-6xl lg:leading-[1.05]"
         >
           <span className="bg-linear-to-br from-[#3A344E] via-[#1856FF] to-[#3A344E] bg-clip-text text-transparent dark:from-white dark:via-[#a5b4fc] dark:to-white">
-            Compress Images in Bulk.
+            One Suite. Every Tool.
           </span>
           <br />
           <span className="bg-linear-to-r from-[#141414] via-[#1856FF] to-[#141414] bg-clip-text text-transparent dark:from-white dark:via-[#93c5fd] dark:to-white">
-            Fast, Private, and Free.
+            Private, Fast, and Free.
           </span>
         </motion.h1>
 
-        {/* Existing static paragraph */}
+        {/* Subtitle */}
         <motion.p
           custom={3}
           initial="hidden"
@@ -97,13 +98,15 @@ const HeroSection: React.FC = () => {
           variants={fadeUp}
           className="mx-auto mt-5 max-w-2xl text-pretty text-lg text-[#141414]/72 md:text-xl dark:text-white/70"
         >
-          Quantipixor lets you reduce image size without losing quality — batch processing, right in your browser, with{" "}
+          Quantipixor gives you a complete toolkit for images and development — compress, convert,
+          remove backgrounds, extract text, generate favicons, build diagrams, and explore mock data.
+          Everything runs in your browser with{" "}
           <span className="font-semibold text-[#141414] dark:text-white/90">zero privacy trade-offs</span>.
         </motion.p>
 
-        {/* Typing animation after h1 in the paragraph section */}
+        {/* Typing animation */}
         <motion.div
-          custom={3.5} // slightly after the static paragraph
+          custom={3.5}
           initial="hidden"
           animate="show"
           variants={fadeUp}
@@ -111,18 +114,22 @@ const HeroSection: React.FC = () => {
         >
           <div className="inline-flex items-center gap-2 rounded-full bg-[#1856FF]/10 px-5 py-2 text-base font-medium text-[#1856FF] backdrop-blur-sm dark:bg-[#1856FF]/20 dark:text-[#a5c4ff]">
             <span className="inline-flex items-center gap-1 text-[#141414]/60 dark:text-white/50">
-              <Sparkles className="h-4 w-4" />
-              It’s
+              <Sparkles className="h-4 w-4" aria-hidden />
+              It&apos;s
             </span>
             <TypeAnimation
               sequence={[
-                "100% local",
+                "AI background removal",
                 1500,
-                "completely private",
+                "batch image compression",
                 1500,
-                "batch‑optimized",
+                "OCR text extraction",
                 1500,
-                "lossless ready",
+                "diagram generation",
+                1500,
+                "favicon creation",
+                1500,
+                "mock data tools",
                 1500,
               ]}
               wrapper="span"
@@ -133,7 +140,7 @@ const HeroSection: React.FC = () => {
           </div>
         </motion.div>
 
-        {/* Buttons row */}
+        {/* CTA buttons */}
         <motion.div
           custom={4}
           initial="hidden"
@@ -143,22 +150,27 @@ const HeroSection: React.FC = () => {
         >
           <Button
             size="lg"
-            className="min-w-[220px] shadow-[0_16px_40px_-12px_rgba(24,86,255,0.65)]"
-            onClick={handleStartUpload}
-            aria-label="Start uploading images"
+            className="min-w-50 shadow-[0_16px_40px_-12px_rgba(24,86,255,0.65)]"
+            onClick={handleExploreTools}
+            aria-label="Explore all Quantipixor tools"
           >
-            <Upload className="h-5 w-5" aria-hidden />
-            Start Uploading
+            <Layers className="h-5 w-5" aria-hidden />
+            Explore All Tools
             <ArrowRight className="h-4 w-4 opacity-90" aria-hidden />
           </Button>
-          <p className="max-w-xs text-center text-sm text-[#141414]/55 dark:text-white/45">
-            Warning tone for edge cases:{" "}
-            <span className="font-mono text-[#E89558]">oversized</span> files are flagged —{" "}
-            <span className="font-mono text-[#EA2143]">blocked</span> only when unsafe.
-          </p>
+          <Button
+            size="lg"
+            variant="outline"
+            className="min-w-50"
+            onClick={handleDiagramStudio}
+            aria-label="Open Diagram Studio"
+          >
+            <PanelsTopLeft className="h-5 w-5" aria-hidden />
+            Diagram Studio
+          </Button>
         </motion.div>
 
-        {/* Showcase card (unchanged) */}
+        {/* Showcase card */}
         <motion.div
           custom={5}
           initial="hidden"
@@ -172,26 +184,29 @@ const HeroSection: React.FC = () => {
               aria-hidden
             />
             <Card className="relative overflow-hidden border-[#1856FF]/20 shadow-[0_24px_80px_-24px_rgba(24,86,255,0.35)] dark:border-[#1856FF]/25">
-              <div className="absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-[#1856FF]/60 to-transparent" aria-hidden />
+              <div
+                className="absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-[#1856FF]/60 to-transparent"
+                aria-hidden
+              />
               <CardContent className="flex flex-col items-center gap-6 p-8 pt-10 sm:flex-row sm:items-stretch sm:justify-between sm:gap-10">
                 <div className="flex flex-col items-center text-center sm:items-start sm:text-left">
                   <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-linear-to-br from-[#1856FF]/20 to-[#3A344E]/15 ring-1 ring-[#1856FF]/25 dark:from-[#1856FF]/30 dark:to-[#3A344E]/25">
-                    <FaImages className="h-8 w-8 text-[#1856FF] dark:text-[#a5c4ff]" aria-hidden />
+                    <Layers className="h-8 w-8 text-[#1856FF] dark:text-[#a5c4ff]" aria-hidden />
                   </div>
                   <p className="mt-4 font-mono text-[11px] font-semibold uppercase tracking-[0.2em] text-[#3A344E]/70 dark:text-white/45">
-                    Batch queue
+                    Full Suite
                   </p>
                   <p className="mt-2 text-sm font-medium text-[#141414] dark:text-white">
-                    Drag, compress, download — all client-side.
+                    Image tools, AI features, and developer utilities — all in one place.
                   </p>
                 </div>
 
                 <div className="grid w-full max-w-xs grid-cols-2 gap-3 sm:max-w-none">
                   {[
-                    { label: "Smaller files", value: "up to 80%", tone: "text-[#1856FF]" },
-                    { label: "Privacy", value: "local-only", tone: "text-[#07CA6B]" },
-                    { label: "Formats", value: "JPEG · PNG · WebP", tone: "text-[#3A344E] dark:text-white/80" },
-                    { label: "Risk", value: "minimal loss", tone: "text-[#E89558]" },
+                    { label: "Tools Available", value: "10+", tone: "text-[#1856FF]" },
+                    { label: "Privacy", value: "100% local", tone: "text-[#07CA6B]" },
+                    { label: "AI Features", value: "BG Remove · OCR", tone: "text-[#3A344E] dark:text-white/80" },
+                    { label: "Server Uploads", value: "zero required", tone: "text-[#E89558]" },
                   ].map((stat) => (
                     <div
                       key={stat.label}

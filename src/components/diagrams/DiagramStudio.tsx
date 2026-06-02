@@ -1,29 +1,54 @@
 "use client";
-// ─── src/components/diagrams/DiagramStudio.tsx ───────────────────────────────
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import {
-    Plus, Trash2, Copy, ChevronDown, LayoutTemplate,
-    Download, PanelLeftClose, PanelLeftOpen, Pencil,
-    Check, X, FileCode2, Sparkles,
+    Plus,
+    Trash2,
+    Copy,
+    ChevronDown,
+    PanelLeftClose,
+    PanelLeftOpen,
+    Pencil,
+    Check,
+    X,
+    FileCode2,
 } from "lucide-react";
-import { COLORS, ALPHA_LAYERS, GRADIENTS, SHADOWS, BORDERS } from "@/styles/design-tokens";
-import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import { DiagramEditor } from "./DiagramEditor";
-import { DiagramRenderer } from "./DiagramRenderer";
-import { TemplatesGallery } from "./TemplatesGallery";
-import { ExportPanel } from "./ExportPanel";
+import { DiagramRenderer, type RenderStatus } from "./DiagramRenderer";
+import { TemplatesMenu } from "./TemplatesMenu";
+import { ExportMenu } from "./ExportMenu";
+import { EngineSelector } from "./EngineSelector";
+import { ResizeHandle } from "./ResizeHandle";
 import { useDiagramStore } from "@/store/diagramStore";
-import { DIAGRAM_TEMPLATES, DIAGRAM_TYPE_META, type DiagramType } from "@/types/diagram.types";
+import {
+    DIAGRAM_TEMPLATES,
+    DIAGRAM_TYPE_META,
+    DEFAULT_CODE_BY_ENGINE,
+    DEFAULT_CODE_BY_TYPE,
+    engineForType,
+    type DiagramEngine,
+    type DiagramType,
+} from "@/types/diagram.types";
 import { toast } from "@/store/toastStore";
 
-const DIAGRAM_TYPES: DiagramType[] = ["erd", "usecase", "activity", "workflow", "sequence", "class"];
+const DIAGRAM_TYPES: DiagramType[] = [
+    "erd",
+    "usecase",
+    "activity",
+    "workflow",
+    "sequence",
+    "class",
+];
+
+const MIN_EDITOR_PX = 280;
+const MAX_EDITOR_PERCENT = 65;
 
 function TypeBadge({ type }: { type: DiagramType }) {
     const meta = DIAGRAM_TYPE_META[type];
     return (
         <span
-            className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold"
+            className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-semibold"
             style={{
                 background: `${meta.color}18`,
                 color: meta.color,
@@ -36,16 +61,20 @@ function TypeBadge({ type }: { type: DiagramType }) {
     );
 }
 
-type SidebarTab = "templates" | "export";
-
 function InlineTitleEditor({ title, onSave }: { title: string; onSave: (v: string) => void }) {
     const [editing, setEditing] = useState(false);
     const [draft, setDraft] = useState(title);
     const inputRef = useRef<HTMLInputElement>(null);
 
-    const start = () => { setDraft(title); setEditing(true); setTimeout(() => inputRef.current?.select(), 0); };
-    const save = () => { onSave(draft.trim() || title); setEditing(false); };
-    const cancel = () => setEditing(false);
+    const start = () => {
+        setDraft(title);
+        setEditing(true);
+        setTimeout(() => inputRef.current?.select(), 0);
+    };
+    const save = () => {
+        onSave(draft.trim() || title);
+        setEditing(false);
+    };
 
     if (editing) {
         return (
@@ -54,157 +83,214 @@ function InlineTitleEditor({ title, onSave }: { title: string; onSave: (v: strin
                     ref={inputRef}
                     value={draft}
                     onChange={(e) => setDraft(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === "Enter") save(); if (e.key === "Escape") cancel(); }}
+                    onKeyDown={(e) => {
+                        if (e.key === "Enter") save();
+                        if (e.key === "Escape") setEditing(false);
+                    }}
                     autoFocus
-                    className="text-sm font-semibold bg-transparent outline-none border-b"
-                    style={{ color: COLORS.text, borderColor: COLORS.primary, minWidth: 0, width: `${Math.max(draft.length, 6)}ch` }}
+                    className="min-w-0 border-b border-[#1856FF] bg-transparent text-sm font-semibold text-[#141414] outline-none dark:text-white"
+                    style={{ width: `${Math.max(draft.length, 6)}ch` }}
                 />
-                <button onClick={save} className="p-0.5 rounded" style={{ color: COLORS.success }}><Check className="size-3.5" /></button>
-                <button onClick={cancel} className="p-0.5 rounded" style={{ color: COLORS.neutral400 }}><X className="size-3.5" /></button>
+                <button
+                    type="button"
+                    onClick={save}
+                    className="rounded p-0.5 text-[#07CA6B]"
+                    aria-label="Save title"
+                >
+                    <Check className="size-3.5" />
+                </button>
+                <button
+                    type="button"
+                    onClick={() => setEditing(false)}
+                    className="rounded p-0.5 text-[#141414]/40 dark:text-white/40"
+                    aria-label="Cancel"
+                >
+                    <X className="size-3.5" />
+                </button>
             </div>
         );
     }
 
     return (
-        <button onClick={start} className="group flex items-center gap-1.5 text-sm font-semibold" style={{ color: COLORS.text }}>
-            <span className="truncate max-w-50">{title}</span>
-            <Pencil className="size-3 opacity-0 group-hover:opacity-60 transition-opacity" style={{ color: COLORS.neutral500 }} />
+        <button
+            type="button"
+            onClick={start}
+            className="group flex max-w-48 items-center gap-1.5 truncate text-sm font-semibold text-[#141414] dark:text-white"
+        >
+            <span className="truncate">{title}</span>
+            <Pencil className="size-3 shrink-0 opacity-0 transition-opacity group-hover:opacity-60" />
         </button>
     );
 }
 
-// ─── Page header — matches ImageConverterPage style ───────────────────────────
-function PageHeader() {
-    return (
-        <div
-            className="relative shrink-0 border-b px-6 py-2"
-            style={{
-                background: ALPHA_LAYERS.surfaceElevated,
-                borderColor: COLORS.neutral100,
-                backdropFilter: "blur(12px)",
-            }}
-        >
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between max-w-screen-2xl mx-auto">
-                <div>
-                    <Badge variant="secondary" className="font-mono text-[10px] tracking-[0.16em]">
-                        Diagram tools
-                    </Badge>
-                    <h1 className="mt-1 text-xl font-bold tracking-tight md:text-2xl" style={{ color: COLORS.text }}>
-                        Diagram{" "}
-                        <span
-                            className="bg-clip-text text-transparent"
-                            style={{ backgroundImage: `linear-gradient(135deg, ${COLORS.primary} 0%, #3A344E 100%)` }}
-                        >
-                            Studio
-                        </span>
-                    </h1>
-                    <p className="mt-1 text-sm max-w-xl" style={{ color: COLORS.neutral500 }}>
-                        Create ERD, sequence, activity, workflow, use-case and class diagrams.
-                        Edit code live and export as SVG, PNG, JPG or WebP.
-                    </p>
-                </div>
-                <div className="flex flex-wrap items-center gap-2 pb-0.5">
-                    <Badge variant="success" className="gap-1.5 text-xs">
-                        <Check className="size-3" aria-hidden />
-                        Local
-                    </Badge>
-                    <Badge variant="outline" className="font-mono text-[10px]">
-                        Mermaid · PlantUML
-                    </Badge>
-                    <Badge variant="outline" className="font-mono text-[10px]">
-                        SVG · PNG · JPG · WebP
-                    </Badge>
-                </div>
-            </div>
-        </div>
-    );
-}
-
-// ─── Main component ───────────────────────────────────────────────────────────
 export function DiagramStudio() {
     const {
-        diagrams, activeDiagramId, createDiagram, createFromTemplate,
-        updateDiagram, deleteDiagram, duplicateDiagram, setActiveDiagram, getActiveDiagram,
+        diagrams,
+        activeDiagramId,
+        createDiagram,
+        createFromTemplate,
+        updateDiagram,
+        setDiagramEngine,
+        deleteDiagram,
+        duplicateDiagram,
+        setActiveDiagram,
+        getActiveDiagram,
     } = useDiagramStore();
 
     const activeDiagram = getActiveDiagram();
-    const [sidebarTab, setSidebarTab] = useState<SidebarTab>("templates");
-    const [sidebarOpen, setSidebarOpen] = useState(true);
-    const [typeMenuOpen, setTypeMenuOpen] = useState(false);
     const [svgContent, setSvgContent] = useState("");
+    const [renderStatus, setRenderStatus] = useState<RenderStatus>("idle");
+    const [renderError, setRenderError] = useState<string | null>(null);
     const [listOpen, setListOpen] = useState(true);
     const [editorCollapsed, setEditorCollapsed] = useState(false);
+    const [editorWidthPx, setEditorWidthPx] = useState<number | null>(null);
+    const [typeMenuOpen, setTypeMenuOpen] = useState(false);
+    const workspaceRef = useRef<HTMLDivElement>(null);
+    const typeMenuRef = useRef<HTMLDivElement>(null);
 
+    useEffect(() => {
+        if (!typeMenuOpen) return;
+        const onDoc = (e: MouseEvent) => {
+            if (!typeMenuRef.current?.contains(e.target as Node)) setTypeMenuOpen(false);
+        };
+        document.addEventListener("mousedown", onDoc);
+        return () => document.removeEventListener("mousedown", onDoc);
+    }, [typeMenuOpen]);
 
-    const handleCodeChange = useCallback((code: string) => {
-        if (!activeDiagramId) return;
-        updateDiagram(activeDiagramId, { code });
-    }, [activeDiagramId, updateDiagram]);
-
-    const handleTitleSave = useCallback((title: string) => {
-        if (!activeDiagramId) return;
-        updateDiagram(activeDiagramId, { title });
-    }, [activeDiagramId, updateDiagram]);
-
-    const handleTemplateSelect = useCallback((templateId: string) => {
-        const template = DIAGRAM_TEMPLATES.find(t => t.id === templateId);
-        if (!template) {
-            toast({ variant: "error", message: "Template not found." });
-            return;
+    // Ensure a diagram is selected when the list is non-empty
+    useEffect(() => {
+        if (diagrams.length === 0) return;
+        if (!activeDiagramId || !diagrams.some((d) => d.id === activeDiagramId)) {
+            setActiveDiagram(diagrams[0].id);
         }
-        if (!template.code || template.code.trim() === "") {
-            toast({ variant: "warning", message: `Template "${template.label}" has no code.` });
-            return;
-        }
-        createFromTemplate(templateId);
-        setSidebarTab("export");
-    }, [createFromTemplate]);
+    }, [diagrams, activeDiagramId, setActiveDiagram]);
+
+    const handleCodeChange = useCallback(
+        (code: string) => {
+            if (!activeDiagramId) return;
+            updateDiagram(activeDiagramId, { code });
+        },
+        [activeDiagramId, updateDiagram]
+    );
+
+    const handleTitleSave = useCallback(
+        (title: string) => {
+            if (!activeDiagramId) return;
+            updateDiagram(activeDiagramId, { title });
+        },
+        [activeDiagramId, updateDiagram]
+    );
+
+    const handleTemplateSelect = useCallback(
+        (templateId: string) => {
+            const template = DIAGRAM_TEMPLATES.find((t) => t.id === templateId);
+            if (!template) {
+                toast({ variant: "error", message: "Template not found." });
+                return;
+            }
+            if (!template.code?.trim()) {
+                toast({ variant: "warning", message: `Template "${template.label}" has no code.` });
+                return;
+            }
+
+            if (activeDiagramId) {
+                updateDiagram(activeDiagramId, {
+                    code: template.code,
+                    type: template.type,
+                    engine: engineForType(template.type),
+                    title: template.label,
+                });
+                toast({ variant: "success", message: `Applied "${template.label}" template.` });
+            } else {
+                createFromTemplate(templateId);
+                toast({ variant: "success", message: `Created from "${template.label}".` });
+            }
+        },
+        [activeDiagramId, createFromTemplate, updateDiagram]
+    );
+
+    const handleEngineChange = useCallback(
+        (engine: DiagramEngine, resetCode: boolean) => {
+            if (!activeDiagramId) return;
+            setDiagramEngine(activeDiagramId, engine, { resetCode });
+            toast({
+                variant: "success",
+                message: resetCode
+                    ? `Loaded ${engine === "mermaid" ? "Mermaid" : "PlantUML"} starter template.`
+                    : `Switched to ${engine === "mermaid" ? "Mermaid" : "PlantUML"}.`,
+            });
+        },
+        [activeDiagramId, setDiagramEngine]
+    );
+
+    const handleSvgReady = useCallback((svg: string) => {
+        setSvgContent(svg);
+    }, []);
+
+    const handleRenderStatusChange = useCallback((status: RenderStatus, error: string | null) => {
+        setRenderStatus(status);
+        setRenderError(error);
+    }, []);
+
+    const handleResize = useCallback((deltaPx: number) => {
+        const workspace = workspaceRef.current;
+        if (!workspace) return;
+        const total = workspace.clientWidth;
+        const current = editorWidthPx ?? total * 0.42;
+        const next = Math.min(
+            total * (MAX_EDITOR_PERCENT / 100),
+            Math.max(MIN_EDITOR_PX, current + deltaPx)
+        );
+        setEditorWidthPx(next);
+    }, [editorWidthPx]);
 
     const handleNewDiagram = (type: DiagramType) => {
         createDiagram(type);
         setTypeMenuOpen(false);
     };
 
-    // ─── Empty state ─────────────────────────────────────────────────────────
     if (diagrams.length === 0) {
         return (
-            <div className="flex flex-col min-h-screen" style={{ background: "#F8F9FC" }}>
-                <PageHeader />
-                <div className="flex flex-1 items-center justify-center">
-                    <div className="flex flex-col items-center gap-6 max-w-sm text-center px-6">
-                        <div
-                            className="size-16 rounded-2xl flex items-center justify-center"
-                            style={{ background: GRADIENTS.brandSubtle, boxShadow: SHADOWS.uploadIcon }}
-                        >
-                            <FileCode2 className="size-8" style={{ color: COLORS.primary }} />
+            <div className="flex min-h-[100dvh] flex-col bg-[var(--background)]">
+                <div className="flex flex-1 items-center justify-center px-6">
+                    <div className="flex max-w-md flex-col items-center gap-6 text-center">
+                        <div className="flex size-16 items-center justify-center rounded-2xl bg-[#1856FF]/10 shadow-lg shadow-[#1856FF]/10">
+                            <FileCode2 className="size-8 text-[#1856FF] dark:text-[#7ab0ff]" />
                         </div>
                         <div>
-                            <h2 className="text-xl font-bold mb-2" style={{ color: COLORS.text }}>No diagrams yet</h2>
-                            <p className="text-sm" style={{ color: COLORS.neutral500 }}>
-                                Start from a blank diagram or pick a template to get going quickly.
+                            <h2 className="mb-2 text-xl font-bold text-[#141414] dark:text-white">
+                                No diagrams yet
+                            </h2>
+                            <p className="text-sm text-[#141414]/55 dark:text-white/50">
+                                Pick a diagram type below. Each opens with the right engine — Mermaid
+                                or PlantUML — and a starter template.
                             </p>
                         </div>
-                        <div className="flex flex-col gap-2 w-full">
+                        <div className="flex w-full flex-col gap-2">
                             {DIAGRAM_TYPES.map((type) => {
                                 const meta = DIAGRAM_TYPE_META[type];
                                 return (
                                     <button
                                         key={type}
+                                        type="button"
                                         onClick={() => createDiagram(type)}
-                                        className="flex items-center gap-3 px-4 py-3 rounded-xl border text-left transition-all duration-150"
-                                        style={{ background: ALPHA_LAYERS.surfaceSubtle, borderColor: COLORS.neutral100 }}
-                                        onMouseEnter={(e) => {
-                                            (e.currentTarget as HTMLElement).style.background = `${meta.color}10`;
-                                            (e.currentTarget as HTMLElement).style.borderColor = `${meta.color}30`;
-                                        }}
-                                        onMouseLeave={(e) => {
-                                            (e.currentTarget as HTMLElement).style.background = ALPHA_LAYERS.surfaceSubtle;
-                                            (e.currentTarget as HTMLElement).style.borderColor = COLORS.neutral100;
-                                        }}
+                                        className={cn(
+                                            "flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors",
+                                            "border-black/6 bg-[color-mix(in_srgb,var(--surface)_88%,transparent)]",
+                                            "hover:border-[#1856FF]/25 hover:bg-[#1856FF]/6",
+                                            "dark:border-white/8 dark:hover:bg-[#1856FF]/10"
+                                        )}
                                     >
-                                        <span className="size-2 rounded-full shrink-0" style={{ background: meta.color }} />
-                                        <span className="text-sm font-medium" style={{ color: COLORS.text }}>{meta.label}</span>
-                                        <span className="text-xs ml-auto" style={{ color: COLORS.neutral400 }}>{meta.engine}</span>
+                                        <span
+                                            className="size-2 shrink-0 rounded-full"
+                                            style={{ background: meta.color }}
+                                        />
+                                        <span className="text-sm font-medium text-[#141414] dark:text-white">
+                                            {meta.label}
+                                        </span>
+                                        <span className="ml-auto text-xs capitalize text-[#141414]/45 dark:text-white/40">
+                                            {meta.engine}
+                                        </span>
                                     </button>
                                 );
                             })}
@@ -215,74 +301,68 @@ export function DiagramStudio() {
         );
     }
 
+    const defaultCode = activeDiagram
+        ? activeDiagram.engine === engineForType(activeDiagram.type)
+            ? DEFAULT_CODE_BY_TYPE[activeDiagram.type]
+            : DEFAULT_CODE_BY_ENGINE[activeDiagram.engine]
+        : undefined;
+
+    const editorWidthStyle = editorCollapsed
+        ? { width: 36 }
+        : editorWidthPx
+          ? { width: editorWidthPx }
+          : { width: "42%" };
+
     return (
-        // 100dvh fills the true viewport height (handles mobile browser chrome)
-        <div className="flex flex-col overflow-hidden" style={{ height: "100dvh", background: "#F8F9FC" }}>
-
-            {/* Page header */}
-            {/* <PageHeader /> */}
-
-            {/* Studio shell — fills all remaining height */}
-            <div className="flex flex-1 overflow-hidden">
-
-                {/* ── Diagram list sidebar ──────────────────────────────────── */}
+        <div className="flex h-[100dvh] flex-col overflow-hidden bg-[var(--background)]">
+            <div className="flex min-h-0 flex-1 overflow-hidden">
+                {/* Diagram list */}
                 <aside
-                    className="flex flex-col shrink-0 border-r overflow-hidden transition-all duration-200"
-                    style={{
-                        width: listOpen ? 220 : 0,
-                        borderColor: COLORS.neutral100,
-                        background: ALPHA_LAYERS.surfaceElevated,
-                        backdropFilter: "blur(12px)",
-                    }}
+                    className={cn(
+                        "flex shrink-0 flex-col overflow-hidden border-r border-black/6 transition-all duration-200 dark:border-white/8",
+                        "bg-[color-mix(in_srgb,var(--surface)_88%,transparent)] backdrop-blur-xl"
+                    )}
+                    style={{ width: listOpen ? 220 : 0 }}
                 >
-                    <div
-                        className="flex items-center justify-between px-3 py-3 border-b shrink-0"
-                        style={{ borderColor: COLORS.neutral100 }}
-                    >
-                        <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: COLORS.neutral500 }}>
+                    <div className="flex shrink-0 items-center justify-between border-b border-black/6 px-3 py-3 dark:border-white/8">
+                        <span className="text-xs font-semibold uppercase tracking-widest text-[#141414]/45 dark:text-white/40">
                             Diagrams
                         </span>
-                        <div className="relative">
+                        <div ref={typeMenuRef} className="relative">
                             <button
+                                type="button"
                                 onClick={() => setTypeMenuOpen((v) => !v)}
-                                className="flex items-center gap-0.5 p-1 rounded-lg transition-colors"
-                                style={{ color: COLORS.neutral500 }}
-                                onMouseEnter={(e) => {
-                                    (e.currentTarget as HTMLElement).style.background = ALPHA_LAYERS.primarySubtle;
-                                    (e.currentTarget as HTMLElement).style.color = COLORS.primary;
-                                }}
-                                onMouseLeave={(e) => {
-                                    (e.currentTarget as HTMLElement).style.background = "transparent";
-                                    (e.currentTarget as HTMLElement).style.color = COLORS.neutral500;
-                                }}
+                                className="flex items-center gap-0.5 rounded-lg p-1 text-[#141414]/50 transition-colors hover:bg-[#1856FF]/10 hover:text-[#1856FF] dark:text-white/50 dark:hover:text-[#7ab0ff]"
+                                aria-label="New diagram"
                             >
                                 <Plus className="size-3.5" />
                                 <ChevronDown className="size-3" />
                             </button>
                             {typeMenuOpen && (
                                 <div
-                                    className="absolute top-full right-0 mt-1 w-44 rounded-xl border shadow-lg overflow-hidden z-50"
-                                    style={{
-                                        background: ALPHA_LAYERS.surfaceElevated,
-                                        borderColor: COLORS.neutral100,
-                                        backdropFilter: "blur(16px)",
-                                        boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
-                                    }}
+                                    className={cn(
+                                        "absolute top-full right-0 z-50 mt-1 w-44 overflow-hidden rounded-xl border shadow-xl",
+                                        "border-black/8 bg-[color-mix(in_srgb,var(--surface)_96%,transparent)] backdrop-blur-xl",
+                                        "dark:border-white/10"
+                                    )}
                                 >
                                     {DIAGRAM_TYPES.map((type) => {
                                         const meta = DIAGRAM_TYPE_META[type];
                                         return (
                                             <button
                                                 key={type}
+                                                type="button"
                                                 onClick={() => handleNewDiagram(type)}
-                                                className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left transition-colors"
-                                                style={{ color: COLORS.text }}
-                                                onMouseEnter={(e) => (e.currentTarget as HTMLElement).style.background = `${meta.color}10`}
-                                                onMouseLeave={(e) => (e.currentTarget as HTMLElement).style.background = "transparent"}
+                                                className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-[#141414] transition-colors hover:bg-[#1856FF]/8 dark:text-white dark:hover:bg-[#1856FF]/12"
                                             >
-                                                <span className="size-2 rounded-full shrink-0" style={{ background: meta.color }} />
+                                                <span
+                                                    className="size-2 shrink-0 rounded-full"
+                                                    style={{ background: meta.color }}
+                                                />
                                                 <span className="font-medium">{meta.label}</span>
-                                                <span className="ml-auto text-xs" style={{ color: COLORS.neutral400 }}>{meta.engine}</span>
+                                                <span className="ml-auto text-[10px] capitalize text-[#141414]/40 dark:text-white/35">
+                                                    {meta.engine}
+                                                </span>
                                             </button>
                                         );
                                     })}
@@ -298,35 +378,60 @@ export function DiagramStudio() {
                             return (
                                 <div key={d.id} className="group relative mx-1 my-0.5">
                                     <button
+                                        type="button"
                                         onClick={() => setActiveDiagram(d.id)}
-                                        className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left transition-all duration-150"
+                                        className={cn(
+                                            "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors",
+                                            isActive
+                                                ? "bg-[#1856FF]/10"
+                                                : "hover:bg-black/[0.03] dark:hover:bg-white/[0.04]"
+                                        )}
                                         style={{
-                                            background: isActive ? ALPHA_LAYERS.primarySubtle : "transparent",
-                                            borderLeft: isActive ? `2px solid ${COLORS.primary}` : "2px solid transparent",
+                                            borderLeft: isActive
+                                                ? "2px solid #1856FF"
+                                                : "2px solid transparent",
                                         }}
-                                        onMouseEnter={(e) => { if (!isActive) (e.currentTarget as HTMLElement).style.background = ALPHA_LAYERS.surfaceSubtle; }}
-                                        onMouseLeave={(e) => { if (!isActive) (e.currentTarget as HTMLElement).style.background = "transparent"; }}
                                     >
-                                        <span className="size-1.5 rounded-full shrink-0" style={{ background: meta.color }} />
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-xs font-medium truncate" style={{ color: isActive ? COLORS.primary : COLORS.text }}>{d.title}</p>
-                                        </div>
+                                        <span
+                                            className="size-1.5 shrink-0 rounded-full"
+                                            style={{ background: meta.color }}
+                                        />
+                                        <p
+                                            className={cn(
+                                                "min-w-0 flex-1 truncate text-xs font-medium",
+                                                isActive
+                                                    ? "text-[#1856FF] dark:text-[#7ab0ff]"
+                                                    : "text-[#141414] dark:text-white"
+                                            )}
+                                        >
+                                            {d.title}
+                                        </p>
                                     </button>
-                                    <div className="absolute right-1.5 top-1/2 -translate-y-1/2 hidden group-hover:flex items-center gap-0.5">
+                                    <div className="absolute top-1/2 right-1.5 hidden -translate-y-1/2 items-center gap-0.5 group-hover:flex">
                                         <button
-                                            onClick={(e) => { e.stopPropagation(); duplicateDiagram(d.id); }}
-                                            className="p-1 rounded-md" title="Duplicate"
-                                            style={{ background: ALPHA_LAYERS.surfaceGlass, color: COLORS.neutral500 }}
-                                            onMouseEnter={(e) => (e.currentTarget as HTMLElement).style.color = COLORS.primary}
-                                            onMouseLeave={(e) => (e.currentTarget as HTMLElement).style.color = COLORS.neutral500}
-                                        ><Copy className="size-3" /></button>
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                duplicateDiagram(d.id);
+                                            }}
+                                            className="rounded-md bg-[color-mix(in_srgb,var(--surface)_90%,transparent)] p-1 text-[#141414]/50 hover:text-[#1856FF] dark:text-white/45"
+                                            title="Duplicate"
+                                            aria-label="Duplicate diagram"
+                                        >
+                                            <Copy className="size-3" />
+                                        </button>
                                         <button
-                                            onClick={(e) => { e.stopPropagation(); deleteDiagram(d.id); }}
-                                            className="p-1 rounded-md" title="Delete"
-                                            style={{ background: ALPHA_LAYERS.surfaceGlass, color: COLORS.neutral500 }}
-                                            onMouseEnter={(e) => (e.currentTarget as HTMLElement).style.color = COLORS.danger}
-                                            onMouseLeave={(e) => (e.currentTarget as HTMLElement).style.color = COLORS.neutral500}
-                                        ><Trash2 className="size-3" /></button>
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                deleteDiagram(d.id);
+                                            }}
+                                            className="rounded-md bg-[color-mix(in_srgb,var(--surface)_90%,transparent)] p-1 text-[#141414]/50 hover:text-[#EA2143] dark:text-white/45"
+                                            title="Delete"
+                                            aria-label="Delete diagram"
+                                        >
+                                            <Trash2 className="size-3" />
+                                        </button>
                                     </div>
                                 </div>
                             );
@@ -334,177 +439,120 @@ export function DiagramStudio() {
                     </div>
                 </aside>
 
-                {/* ── Main workspace ────────────────────────────────────────── */}
-                <div className="flex flex-col flex-1 min-w-0 min-h-0 overflow-hidden">
-
-                    {/* Toolbar */}
+                {/* Main workspace */}
+                <div className="flex min-h-0 min-w-0 flex-1 flex-col">
                     <header
-                        className="flex items-center gap-3 px-4 py-2.5 border-b shrink-0"
-                        style={{
-                            background: ALPHA_LAYERS.surfaceElevated,
-                            borderColor: COLORS.neutral100,
-                            backdropFilter: "blur(12px)",
-                        }}
-                    >
-                        <button
-                            onClick={() => setListOpen((v) => !v)}
-                            className="p-1.5 rounded-lg transition-colors"
-                            title={listOpen ? "Hide diagrams" : "Show diagrams"}
-                            style={{ color: COLORS.neutral500 }}
-                            onMouseEnter={(e) => {
-                                (e.currentTarget as HTMLElement).style.background = ALPHA_LAYERS.primarySubtle;
-                                (e.currentTarget as HTMLElement).style.color = COLORS.primary;
-                            }}
-                            onMouseLeave={(e) => {
-                                (e.currentTarget as HTMLElement).style.background = "transparent";
-                                (e.currentTarget as HTMLElement).style.color = COLORS.neutral500;
-                            }}
-                        >
-                            {listOpen ? <PanelLeftClose className="size-4" /> : <PanelLeftOpen className="size-4" />}
-                        </button>
-
-                        {activeDiagram ? (
-                            <>
-                                <InlineTitleEditor title={activeDiagram.title} onSave={handleTitleSave} />
-                                <TypeBadge type={activeDiagram.type} />
-                            </>
-                        ) : (
-                            <span className="text-sm text-neutral-400">No diagram selected</span>
+                        className={cn(
+                            "relative z-30 flex shrink-0 items-center gap-2 border-b px-3 py-2 sm:gap-3 sm:px-4",
+                            "border-black/6 bg-[color-mix(in_srgb,var(--surface)_88%,transparent)] backdrop-blur-xl",
+                            "dark:border-white/8"
                         )}
-
-                        <div className="flex-1" />
-
-                        <div className="flex items-center gap-1">
+                    >
+                        <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
                             <button
-                                onClick={() => { setSidebarTab("templates"); setSidebarOpen((v) => sidebarTab === "templates" ? !v : true); }}
-                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all duration-150"
-                                style={{
-                                    background: sidebarOpen && sidebarTab === "templates" ? ALPHA_LAYERS.primarySubtle : "transparent",
-                                    borderColor: sidebarOpen && sidebarTab === "templates" ? BORDERS.blue : COLORS.neutral200,
-                                    color: sidebarOpen && sidebarTab === "templates" ? COLORS.primary : COLORS.neutral600,
-                                }}
+                                type="button"
+                                onClick={() => setListOpen((v) => !v)}
+                                className="shrink-0 rounded-lg p-1.5 text-[#141414]/50 transition-colors hover:bg-[#1856FF]/10 hover:text-[#1856FF] dark:text-white/50 dark:hover:text-[#7ab0ff]"
+                                title={listOpen ? "Hide diagrams" : "Show diagrams"}
+                                aria-label={listOpen ? "Hide diagram list" : "Show diagram list"}
                             >
-                                <LayoutTemplate className="size-3.5" /> Templates
+                                {listOpen ? (
+                                    <PanelLeftClose className="size-4" />
+                                ) : (
+                                    <PanelLeftOpen className="size-4" />
+                                )}
                             </button>
-                            <button
-                                onClick={() => { setSidebarTab("export"); setSidebarOpen((v) => sidebarTab === "export" ? !v : true); }}
-                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all duration-150"
-                                style={{
-                                    background: sidebarOpen && sidebarTab === "export" ? ALPHA_LAYERS.primarySubtle : "transparent",
-                                    borderColor: sidebarOpen && sidebarTab === "export" ? BORDERS.blue : COLORS.neutral200,
-                                    color: sidebarOpen && sidebarTab === "export" ? COLORS.primary : COLORS.neutral600,
-                                }}
-                            >
-                                <Download className="size-3.5" /> Export
-                            </button>
+
+                            {activeDiagram ? (
+                                <>
+                                    <InlineTitleEditor
+                                        title={activeDiagram.title}
+                                        onSave={handleTitleSave}
+                                    />
+                                    <TypeBadge type={activeDiagram.type} />
+                                    <EngineSelector
+                                        value={activeDiagram.engine}
+                                        onChange={handleEngineChange}
+                                        hasCustomCode={
+                                            !!activeDiagram.code.trim() &&
+                                            activeDiagram.code !== defaultCode
+                                        }
+                                    />
+                                </>
+                            ) : (
+                                <span className="truncate text-sm text-[#141414]/40 dark:text-white/40">
+                                    No diagram selected
+                                </span>
+                            )}
                         </div>
+
+                        {activeDiagram && (
+                            <div className="flex shrink-0 items-center gap-1.5">
+                                {renderStatus === "error" && renderError && (
+                                    <span
+                                        className="hidden max-w-24 truncate text-[10px] text-[#EA2143] lg:inline"
+                                        title={renderError}
+                                    >
+                                        Error
+                                    </span>
+                                )}
+                                <TemplatesMenu
+                                    engine={activeDiagram.engine}
+                                    onSelect={handleTemplateSelect}
+                                />
+                                <ExportMenu
+                                    svgContent={svgContent}
+                                    diagramTitle={activeDiagram.title}
+                                    sourceCode={activeDiagram.code}
+                                    engine={activeDiagram.engine}
+                                />
+                            </div>
+                        )}
                     </header>
 
-                    {/* Editor + Renderer + Right sidebar — fills remaining height */}
-                    <div className="flex flex-1 min-h-0 overflow-hidden">
-
-                        {/* Editor */}
+                    <div ref={workspaceRef} className="flex min-h-0 flex-1 overflow-hidden">
                         {activeDiagram ? (
-                            <div
-                                className="shrink-0 h-full transition-all duration-200"
-                                style={{ width: editorCollapsed ? 36 : '42%' }}
-                            >
-                                <DiagramEditor
-                                    value={activeDiagram.code}
-                                    onChange={handleCodeChange}
-                                    type={activeDiagram.type}
-                                    collapsed={editorCollapsed}
-                                    onCollapsedChange={setEditorCollapsed}
-                                    className="h-full"
-                                    style={{ borderColor: COLORS.neutral100 }}
-                                />
-                            </div>
-                        ) : (
-                            <div
-                                className="shrink-0 flex items-center justify-center border-r"
-                                style={{
-                                    width: editorCollapsed ? 36 : '42%',
-                                    borderColor: COLORS.neutral100,
-                                    color: COLORS.neutral400,
-                                }}
-                            >
-                                <div className="flex flex-col items-center gap-2">
-                                    <Sparkles className="size-8 opacity-30" />
-                                    <p className="text-sm">Select a diagram to edit</p>
+                            <>
+                                <div
+                                    className="h-full shrink-0 transition-[width] duration-150"
+                                    style={editorWidthStyle}
+                                >
+                                    <DiagramEditor
+                                        value={activeDiagram.code}
+                                        onChange={handleCodeChange}
+                                        engine={activeDiagram.engine}
+                                        defaultCode={defaultCode}
+                                        collapsed={editorCollapsed}
+                                        onCollapsedChange={setEditorCollapsed}
+                                        className="h-full"
+                                    />
                                 </div>
+
+                                {!editorCollapsed && (
+                                    <ResizeHandle onResize={handleResize} />
+                                )}
+
+                                <div className="min-h-0 min-w-0 flex-1 overflow-hidden">
+                                    <DiagramRenderer
+                                        code={activeDiagram.code}
+                                        type={activeDiagram.type}
+                                        engine={activeDiagram.engine}
+                                        onSvgReady={handleSvgReady}
+                                        onRenderStatusChange={handleRenderStatusChange}
+                                        className="h-full"
+                                    />
+                                </div>
+                            </>
+                        ) : (
+                            <div className="flex flex-1 items-center justify-center">
+                                <p className="text-sm text-[#141414]/40 dark:text-white/35">
+                                    Select a diagram from the list
+                                </p>
                             </div>
                         )}
-
-                        {/* Renderer */}
-                        <div className="flex-1 min-w-0 min-h-0 overflow-hidden">
-                            {activeDiagram ? (
-                                <DiagramRenderer
-                                    code={activeDiagram.code}
-                                    type={activeDiagram.type}
-                                    onSvgReady={setSvgContent}
-                                    className="h-full"
-                                />
-                            ) : (
-                                <div className="h-full flex items-center justify-center" style={{ background: "#FAFBFE", color: COLORS.neutral400 }}>
-                                    <p className="text-sm">Preview will appear here</p>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Right sidebar */}
-                        <aside
-                            className="flex flex-col shrink-0 border-l overflow-hidden transition-all duration-200"
-                            style={{
-                                width: sidebarOpen ? 260 : 0,
-                                borderColor: COLORS.neutral100,
-                                background: ALPHA_LAYERS.surfaceElevated,
-                                backdropFilter: "blur(12px)",
-                            }}
-                        >
-                            {sidebarOpen && (
-                                <>
-                                    <div className="flex border-b shrink-0" style={{ borderColor: COLORS.neutral100 }}>
-                                        {(["templates", "export"] as SidebarTab[]).map((tab) => (
-                                            <button
-                                                key={tab}
-                                                onClick={() => setSidebarTab(tab)}
-                                                className="flex-1 py-2.5 text-xs font-semibold capitalize tracking-wide transition-colors"
-                                                style={{
-                                                    color: sidebarTab === tab ? COLORS.primary : COLORS.neutral500,
-                                                    borderBottom: sidebarTab === tab ? `2px solid ${COLORS.primary}` : "2px solid transparent",
-                                                    background: "transparent",
-                                                }}
-                                            >
-                                                {tab === "templates" ? (
-                                                    <span className="flex items-center justify-center gap-1.5">
-                                                        <LayoutTemplate className="size-3.5" /> Templates
-                                                    </span>
-                                                ) : (
-                                                    <span className="flex items-center justify-center gap-1.5">
-                                                        <Download className="size-3.5" /> Export
-                                                    </span>
-                                                )}
-                                            </button>
-                                        ))}
-                                    </div>
-                                    <div className="flex-1 overflow-hidden">
-                                        {sidebarTab === "templates" ? (
-                                            <TemplatesGallery onSelect={handleTemplateSelect} />
-                                        ) : (
-                                            <ExportPanel
-                                                svgContent={svgContent}
-                                                diagramTitle={activeDiagram?.title ?? "diagram"}
-                                            />
-                                        )}
-                                    </div>
-                                </>
-                            )}
-                        </aside>
                     </div>
                 </div>
             </div>
-
-            {typeMenuOpen && <div className="fixed inset-0 z-40" onClick={() => setTypeMenuOpen(false)} />}
         </div>
     );
 }

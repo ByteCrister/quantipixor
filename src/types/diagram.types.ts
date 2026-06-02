@@ -1,6 +1,7 @@
-// ─── src/types/diagram.ts ──────────────────────────────────────────────────────
+// ─── src/types/diagram.types.ts ──────────────────────────────────────────────
 
 export type DiagramType = "erd" | "usecase" | "activity" | "workflow" | "sequence" | "class";
+export type DiagramEngine = "mermaid" | "plantuml";
 export type ExportFormat = "svg" | "png" | "jpg" | "webp";
 
 export interface DiagramTemplate {
@@ -16,10 +17,124 @@ export interface DiagramRecord {
     id: string;
     title: string;
     type: DiagramType;
+    engine: DiagramEngine;
     code: string;
     createdAt: number;
     updatedAt: number;
 }
+
+export const DIAGRAM_TYPE_META: Record<
+    DiagramType,
+    { label: string; color: string; engine: DiagramEngine }
+> = {
+    erd: { label: "ERD", color: "#07CA6B", engine: "mermaid" },
+    usecase: { label: "Use Case", color: "#1856FF", engine: "plantuml" },
+    activity: { label: "Activity", color: "#E89558", engine: "plantuml" },
+    workflow: { label: "Workflow", color: "#7C3AED", engine: "mermaid" },
+    sequence: { label: "Sequence", color: "#2D9CDB", engine: "mermaid" },
+    class: { label: "Class", color: "#EA2143", engine: "mermaid" },
+};
+
+export function engineForType(type: DiagramType): DiagramEngine {
+    return DIAGRAM_TYPE_META[type].engine;
+}
+
+export function engineForTemplate(template: DiagramTemplate): DiagramEngine {
+    return engineForType(template.type);
+}
+
+/** Blank starter when switching diagram engine */
+export const DEFAULT_CODE_BY_ENGINE: Record<DiagramEngine, string> = {
+    mermaid: `flowchart LR
+    A([Start]) --> B[Process]
+    B --> C{Decision}
+    C -->|Yes| D[Result]
+    C -->|No| E[Alternative]
+    D --> F([End])
+    E --> F`,
+    plantuml: `@startuml
+!theme plain
+skinparam backgroundColor transparent
+start
+:Step One;
+if (Condition?) then (yes)
+  :Action;
+else (no)
+  :Other;
+endif
+stop
+@enduml`,
+};
+
+export const DEFAULT_CODE_BY_TYPE: Record<DiagramType, string> = {
+    erd: `erDiagram
+    ENTITY_A {
+        int id PK
+        string name
+    }
+    ENTITY_B {
+        int id PK
+        int entity_a_id FK
+        string value
+    }
+    ENTITY_A ||--o{ ENTITY_B : "has"`,
+    usecase: `@startuml
+!theme plain
+skinparam backgroundColor transparent
+left to right direction
+actor User
+rectangle "System" {
+  usecase "Feature A" as UC1
+  usecase "Feature B" as UC2
+}
+User --> UC1
+User --> UC2
+@enduml`,
+    activity: `@startuml
+!theme plain
+skinparam backgroundColor transparent
+start
+:Step One;
+if (Condition?) then (yes)
+  :Do A;
+else (no)
+  :Do B;
+endif
+stop
+@enduml`,
+    workflow: `flowchart LR
+    A([Start]) --> B[Process]
+    B --> C{Decision}
+    C -->|Yes| D[Result A]
+    C -->|No| E[Result B]
+    D --> F([End])
+    E --> F`,
+    sequence: `sequenceDiagram
+    actor User
+    participant System
+    participant Database
+    User->>System: Request
+    System->>Database: Query
+    Database-->>System: Data
+    System-->>User: Response`,
+    class: `classDiagram
+    class Animal {
+        +String name
+        +makeSound() void
+    }
+    class Dog {
+        +fetch() void
+    }
+    Animal <|-- Dog`,
+};
+
+export const ENGINE_META: Record<
+    DiagramEngine,
+    { label: string; shortLabel: string; color: string }
+> = {
+    mermaid: { label: "Mermaid", shortLabel: "Mermaid", color: "#7C3AED" },
+    plantuml: { label: "PlantUML", shortLabel: "PlantUML", color: "#E89558" },
+};
 
 // ─── Templates ────────────────────────────────────────────────────────────────
 
@@ -296,7 +411,7 @@ stop
         API-->>-Gateway: 200 OK (from DB)
     end
 
-    Gateway-->>-Client: 200 JSON Response
+    Gateway-->>-Client: 200 OK JSON Response
 
     Note over Client,DB: Cache-aside pattern for performance
 
@@ -397,14 +512,6 @@ stop
     },
 ];
 
-export const DIAGRAM_TYPE_META: Record<
-    DiagramType,
-    { label: string; color: string; engine: "mermaid" | "plantuml" }
-> = {
-    erd: { label: "ERD", color: "#07CA6B", engine: "mermaid" },
-    usecase: { label: "Use Case", color: "#1856FF", engine: "plantuml" },
-    activity: { label: "Activity", color: "#E89558", engine: "plantuml" },
-    workflow: { label: "Workflow", color: "#7C3AED", engine: "mermaid" },
-    sequence: { label: "Sequence", color: "#2D9CDB", engine: "mermaid" },
-    class: { label: "Class", color: "#EA2143", engine: "mermaid" },
-};
+export function templatesForEngine(engine: DiagramEngine): DiagramTemplate[] {
+    return DIAGRAM_TEMPLATES.filter((t) => engineForTemplate(t) === engine);
+}

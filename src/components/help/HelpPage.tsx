@@ -436,7 +436,7 @@ const DIAGRAMS_STEPS = [
         num: "02",
         icon: Eye,
         title: "Preview",
-        desc: "The right panel renders the diagram in real time. Switch between Mermaid and PlantUML using the toolbar toggle. Supported types: flowchart, ERD, sequence, class, Gantt.",
+        desc: "The preview panel renders your diagram in real time. Switch between Mermaid and PlantUML using the engine selector in the toolbar. Supported types include ERD, use case, activity, workflow, sequence, and class.",
         gradient: "from-pink-500 to-purple-600",
         bgLight: "bg-pink-50",
         bgDark: "dark:bg-pink-500/5",

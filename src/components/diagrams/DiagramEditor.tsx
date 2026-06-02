@@ -1,23 +1,34 @@
 "use client";
-// ─── src/components/diagrams/DiagramEditor.tsx ───────────────────────────────
-// Improved editor: collapsible, keyboard shortcuts (indent/outdent, comment,
-// duplicate line, move line, go to line), line numbers synced on scroll
 
 import { useRef, useEffect, useCallback, useState } from "react";
-import { COLORS } from "@/styles/design-tokens";
 import { cn } from "@/lib/utils";
-import { Code2, RotateCcw, ChevronLeft, ChevronRight, Keyboard } from "lucide-react";
+import {
+    Code2,
+    RotateCcw,
+    ChevronLeft,
+    ChevronRight,
+    Keyboard,
+    Copy,
+    Eraser,
+    Check,
+} from "lucide-react";
+import { ENGINE_META, type DiagramEngine } from "@/types/diagram.types";
+import { toast } from "@/store/toastStore";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface DiagramEditorProps {
     value: string;
     onChange: (v: string) => void;
-    type: string;
-    defaultValue?: string;
+    engine: DiagramEngine;
+    defaultCode?: string;
     className?: string;
-    /** Controlled collapsed state from parent */
     collapsed?: boolean;
     onCollapsedChange?: (v: boolean) => void;
-    style?: React.CSSProperties; 
 }
 
 const EDITOR_SHORTCUTS = [
@@ -33,8 +44,8 @@ const EDITOR_SHORTCUTS = [
 export function DiagramEditor({
     value,
     onChange,
-    type,
-    defaultValue,
+    engine,
+    defaultCode,
     className,
     collapsed = false,
     onCollapsedChange,
@@ -42,12 +53,14 @@ export function DiagramEditor({
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const lineNumRef = useRef<HTMLDivElement>(null);
     const [showShortcuts, setShowShortcuts] = useState(false);
-    const [goToLine, setGoToLine] = useState<string>("");
+    const [goToLine, setGoToLine] = useState("");
     const [showGoTo, setShowGoTo] = useState(false);
+    const [copied, setCopied] = useState(false);
 
     const lines = value.split("\n");
+    const engineMeta = ENGINE_META[engine];
+    const commentPrefix = engine === "mermaid" ? "%% " : "' ";
 
-    // Sync scroll between line numbers and textarea
     const syncScroll = useCallback(() => {
         if (!textareaRef.current || !lineNumRef.current) return;
         lineNumRef.current.scrollTop = textareaRef.current.scrollTop;
@@ -60,22 +73,37 @@ export function DiagramEditor({
         return () => ta.removeEventListener("scroll", syncScroll);
     }, [syncScroll]);
 
-    // ── Key bindings ─────────────────────────────────────────────────────────────
+    const copyCode = async () => {
+        try {
+            await navigator.clipboard.writeText(value);
+            setCopied(true);
+            toast({ variant: "success", message: "Diagram code copied." });
+            setTimeout(() => setCopied(false), 2000);
+        } catch {
+            toast({ variant: "error", message: "Could not copy to clipboard." });
+        }
+    };
+
+    const clearCode = () => {
+        onChange("");
+        textareaRef.current?.focus();
+    };
+
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         const ta = e.currentTarget;
         const start = ta.selectionStart;
         const end = ta.selectionEnd;
 
-        // Tab → indent
         if (e.key === "Tab" && !e.shiftKey) {
             e.preventDefault();
             const newVal = value.substring(0, start) + "    " + value.substring(end);
             onChange(newVal);
-            requestAnimationFrame(() => { ta.selectionStart = ta.selectionEnd = start + 4; });
+            requestAnimationFrame(() => {
+                ta.selectionStart = ta.selectionEnd = start + 4;
+            });
             return;
         }
 
-        // Shift+Tab → outdent
         if (e.key === "Tab" && e.shiftKey) {
             e.preventDefault();
             const lineStart = value.lastIndexOf("\n", start - 1) + 1;
@@ -84,28 +112,33 @@ export function DiagramEditor({
             const stripped = line.replace(/^    /, "");
             const removed = line.length - stripped.length;
             if (removed > 0) {
-                const newVal = value.substring(0, lineStart) + stripped + value.substring(lineStart + line.length);
+                const newVal =
+                    value.substring(0, lineStart) +
+                    stripped +
+                    value.substring(lineStart + line.length);
                 onChange(newVal);
-                requestAnimationFrame(() => { ta.selectionStart = ta.selectionEnd = Math.max(start - removed, lineStart); });
+                requestAnimationFrame(() => {
+                    ta.selectionStart = ta.selectionEnd = Math.max(start - removed, lineStart);
+                });
             }
             return;
         }
 
-        // Ctrl+/ → toggle line comment (# for both mermaid and plantuml)
         if ((e.ctrlKey || e.metaKey) && e.key === "/") {
             e.preventDefault();
             const lineStart = value.lastIndexOf("\n", start - 1) + 1;
             const lineEnd = value.indexOf("\n", start);
             const line = value.substring(lineStart, lineEnd === -1 ? undefined : lineEnd);
-            const actualPrefix = type === "mermaid" ? "%% " : "' ";
-            const isCommented = line.startsWith(actualPrefix);
-            const newLine = isCommented ? line.slice(actualPrefix.length) : actualPrefix + line;
-            const newVal = value.substring(0, lineStart) + newLine + value.substring(lineStart + line.length);
+            const isCommented = line.startsWith(commentPrefix);
+            const newLine = isCommented ? line.slice(commentPrefix.length) : commentPrefix + line;
+            const newVal =
+                value.substring(0, lineStart) +
+                newLine +
+                value.substring(lineStart + line.length);
             onChange(newVal);
             return;
         }
 
-        // Ctrl+D → duplicate line
         if ((e.ctrlKey || e.metaKey) && e.key === "d") {
             e.preventDefault();
             const lineStart = value.lastIndexOf("\n", start - 1) + 1;
@@ -114,59 +147,53 @@ export function DiagramEditor({
             const insertAt = lineEnd === -1 ? value.length : lineEnd;
             const newVal = value.substring(0, insertAt) + "\n" + line + value.substring(insertAt);
             onChange(newVal);
-            requestAnimationFrame(() => { ta.selectionStart = ta.selectionEnd = insertAt + 1 + (start - lineStart); });
             return;
         }
 
-        // Ctrl+Backspace → delete current line
         if ((e.ctrlKey || e.metaKey) && e.key === "Backspace") {
             e.preventDefault();
             const lineStart = value.lastIndexOf("\n", start - 1) + 1;
             const lineEnd = value.indexOf("\n", start);
             if (lineEnd === -1) {
-                // Last line
                 const newVal = value.substring(0, Math.max(0, lineStart - 1));
                 onChange(newVal);
-                requestAnimationFrame(() => { ta.selectionStart = ta.selectionEnd = newVal.length; });
             } else {
-                const newVal = value.substring(0, lineStart) + value.substring(lineEnd + 1);
-                onChange(newVal);
-                requestAnimationFrame(() => { ta.selectionStart = ta.selectionEnd = lineStart; });
+                onChange(value.substring(0, lineStart) + value.substring(lineEnd + 1));
             }
             return;
         }
 
-        // Alt+ArrowUp → move line up
         if (e.altKey && e.key === "ArrowUp") {
             e.preventDefault();
             const lineArr = value.split("\n");
             const curLineIdx = value.substring(0, start).split("\n").length - 1;
             if (curLineIdx === 0) return;
             const swapped = [...lineArr];
-            [swapped[curLineIdx - 1], swapped[curLineIdx]] = [swapped[curLineIdx], swapped[curLineIdx - 1]];
+            [swapped[curLineIdx - 1], swapped[curLineIdx]] = [
+                swapped[curLineIdx],
+                swapped[curLineIdx - 1],
+            ];
             onChange(swapped.join("\n"));
-            const newPos = swapped.slice(0, curLineIdx - 1).join("\n").length + (curLineIdx - 1 > 0 ? 1 : 0) + (start - value.split("\n").slice(0, curLineIdx).join("\n").length - (curLineIdx > 0 ? 1 : 0));
-            requestAnimationFrame(() => { ta.selectionStart = ta.selectionEnd = Math.max(0, newPos); });
             return;
         }
 
-        // Alt+ArrowDown → move line down
         if (e.altKey && e.key === "ArrowDown") {
             e.preventDefault();
             const lineArr = value.split("\n");
             const curLineIdx = value.substring(0, start).split("\n").length - 1;
             if (curLineIdx >= lineArr.length - 1) return;
             const swapped = [...lineArr];
-            [swapped[curLineIdx], swapped[curLineIdx + 1]] = [swapped[curLineIdx + 1], swapped[curLineIdx]];
+            [swapped[curLineIdx], swapped[curLineIdx + 1]] = [
+                swapped[curLineIdx + 1],
+                swapped[curLineIdx],
+            ];
             onChange(swapped.join("\n"));
             return;
         }
 
-        // Ctrl+G → go to line
         if ((e.ctrlKey || e.metaKey) && e.key === "g") {
             e.preventDefault();
             setShowGoTo(true);
-            return;
         }
     };
 
@@ -178,9 +205,7 @@ export function DiagramEditor({
         const pos = lineArr.slice(0, idx).join("\n").length + (idx > 0 ? 1 : 0);
         textareaRef.current.focus();
         textareaRef.current.selectionStart = textareaRef.current.selectionEnd = pos;
-        // Scroll line into view
-        const lineHeight = 20;
-        textareaRef.current.scrollTop = Math.max(0, idx * lineHeight - 80);
+        textareaRef.current.scrollTop = Math.max(0, idx * 20 - 80);
         setShowGoTo(false);
         setGoToLine("");
     };
@@ -188,224 +213,219 @@ export function DiagramEditor({
     if (collapsed) {
         return (
             <div
-      className={cn("flex items-center justify-center border-r h-full", className)}
-            style={{ borderColor: COLORS.neutral100, background: "#0F172A", width: 36 }}
+                className={cn(
+                    "flex h-full w-9 shrink-0 items-center justify-center border-r border-black/6 bg-[#0f172a] dark:border-white/8",
+                    className
+                )}
             >
                 <button
+                    type="button"
                     onClick={() => onCollapsedChange?.(false)}
                     title="Show editor"
-                    className="flex flex-col items-center gap-1 py-3 group"
-                    style={{ color: "rgba(148,163,184,0.5)" }}
-                    onMouseEnter={(e) => (e.currentTarget as HTMLElement).style.color = "rgba(96,165,250,0.8)"}
-                    onMouseLeave={(e) => (e.currentTarget as HTMLElement).style.color = "rgba(148,163,184,0.5)"}
+                    aria-label="Show editor"
+                    className="flex flex-col items-center gap-1 py-3 text-slate-500 transition-colors hover:text-[#60a5fa]"
                 >
                     <Code2 className="size-4" />
-                    <ChevronRight className="size-3 mt-1" />
+                    <ChevronRight className="size-3" />
                 </button>
             </div>
         );
     }
 
     return (
-        <div className={cn("flex flex-col h-full overflow-hidden", className)}>
-            {/* Header */}
+        <TooltipProvider delayDuration={300}>
             <div
-                className="flex items-center justify-between px-3 py-2 border-b shrink-0"
-                style={{
-                    background: "rgba(15,23,42,0.95)",
-                    borderColor: "rgba(255,255,255,0.07)",
-                }}
+                className={cn(
+                    "flex h-full min-w-0 flex-col overflow-hidden border-r border-black/6 dark:border-white/8",
+                    className
+                )}
             >
-                <div className="flex items-center gap-2">
-                    <Code2 className="size-3.5" style={{ color: "rgba(96,165,250,0.7)" }} />
-                    <span className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.6)" }}>
-                        Editor
-                    </span>
-                    <span
-                        className="text-xs px-1.5 py-0.5 rounded font-mono"
-                        style={{
-                            background: "rgba(24,86,255,0.15)",
-                            color: "rgba(96,165,250,0.9)",
-                            border: "1px solid rgba(24,86,255,0.2)",
-                        }}
-                    >
-                        {type === "mermaid" ? "Mermaid" : "PlantUML"}
-                    </span>
-                </div>
-
-                <div className="flex items-center gap-1">
-                    {/* Keyboard shortcuts toggle */}
-                    <button
-                        onClick={() => setShowShortcuts((v) => !v)}
-                        title="Editor shortcuts"
-                        className="p-1.5 rounded-lg transition-colors"
-                        style={{ color: showShortcuts ? "rgba(96,165,250,0.9)" : "rgba(148,163,184,0.4)" }}
-                        onMouseEnter={(e) => (e.currentTarget as HTMLElement).style.color = "rgba(96,165,250,0.8)"}
-                        onMouseLeave={(e) => (e.currentTarget as HTMLElement).style.color = showShortcuts ? "rgba(96,165,250,0.9)" : "rgba(148,163,184,0.4)"}
-                    >
-                        <Keyboard className="size-3.5" />
-                    </button>
-
-                    {/* Reset */}
-                    {defaultValue && value !== defaultValue && (
-                        <button
-                            onClick={() => onChange(defaultValue)}
-                            className="flex items-center gap-1 text-xs px-2 py-1 rounded-lg transition-colors"
-                            style={{ color: "rgba(148,163,184,0.5)" }}
-                            onMouseEnter={(e) => {
-                                (e.currentTarget as HTMLElement).style.background = "rgba(24,86,255,0.15)";
-                                (e.currentTarget as HTMLElement).style.color = "rgba(96,165,250,0.9)";
-                            }}
-                            onMouseLeave={(e) => {
-                                (e.currentTarget as HTMLElement).style.background = "transparent";
-                                (e.currentTarget as HTMLElement).style.color = "rgba(148,163,184,0.5)";
+                <div className="flex shrink-0 items-center justify-between border-b border-white/8 bg-[#0f172a] px-3 py-2">
+                    <div className="flex items-center gap-2">
+                        <Code2 className="size-3.5 text-[#60a5fa]/80" aria-hidden />
+                        <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">
+                            Editor
+                        </span>
+                        <span
+                            className="rounded px-1.5 py-0.5 font-mono text-[10px] font-semibold"
+                            style={{
+                                background: `${engineMeta.color}22`,
+                                color: engineMeta.color,
+                                border: `1px solid ${engineMeta.color}33`,
                             }}
                         >
-                            <RotateCcw className="size-3" />
-                            Reset
+                            {engineMeta.label}
+                        </span>
+                    </div>
+
+                    <div className="flex items-center gap-0.5">
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <button
+                                    type="button"
+                                    onClick={copyCode}
+                                    aria-label="Copy diagram code"
+                                    className="rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-white/6 hover:text-slate-300"
+                                >
+                                    {copied ? (
+                                        <Check className="size-3.5 text-emerald-400" />
+                                    ) : (
+                                        <Copy className="size-3.5" />
+                                    )}
+                                </button>
+                            </TooltipTrigger>
+                            <TooltipContent>Copy code</TooltipContent>
+                        </Tooltip>
+
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <button
+                                    type="button"
+                                    onClick={clearCode}
+                                    aria-label="Clear editor"
+                                    className="rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-white/6 hover:text-slate-300"
+                                >
+                                    <Eraser className="size-3.5" />
+                                </button>
+                            </TooltipTrigger>
+                            <TooltipContent>Clear editor</TooltipContent>
+                        </Tooltip>
+
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowShortcuts((v) => !v)}
+                                    aria-label="Keyboard shortcuts"
+                                    className={cn(
+                                        "rounded-lg p-1.5 transition-colors",
+                                        showShortcuts
+                                            ? "text-[#60a5fa]"
+                                            : "text-slate-500 hover:bg-white/6 hover:text-slate-300"
+                                    )}
+                                >
+                                    <Keyboard className="size-3.5" />
+                                </button>
+                            </TooltipTrigger>
+                            <TooltipContent>Shortcuts</TooltipContent>
+                        </Tooltip>
+
+                        {defaultCode && value !== defaultCode && (
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <button
+                                        type="button"
+                                        onClick={() => onChange(defaultCode)}
+                                        aria-label="Reset to default"
+                                        className="rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-white/6 hover:text-slate-300"
+                                    >
+                                        <RotateCcw className="size-3.5" />
+                                    </button>
+                                </TooltipTrigger>
+                                <TooltipContent>Reset template</TooltipContent>
+                            </Tooltip>
+                        )}
+
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <button
+                                    type="button"
+                                    onClick={() => onCollapsedChange?.(true)}
+                                    aria-label="Collapse editor"
+                                    className="rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-white/6 hover:text-slate-300"
+                                >
+                                    <ChevronLeft className="size-3.5" />
+                                </button>
+                            </TooltipTrigger>
+                            <TooltipContent>Collapse editor</TooltipContent>
+                        </Tooltip>
+                    </div>
+                </div>
+
+                {showShortcuts && (
+                    <div className="grid shrink-0 grid-cols-2 gap-x-4 gap-y-1.5 border-b border-white/6 bg-[#0c1222] p-3">
+                        {EDITOR_SHORTCUTS.map(({ keys, desc }) => (
+                            <div key={keys} className="flex items-center gap-2">
+                                <kbd className="shrink-0 rounded border border-white/10 bg-white/8 px-1 py-0.5 font-mono text-[9px] text-[#60a5fa]/90">
+                                    {keys}
+                                </kbd>
+                                <span className="truncate text-[10px] text-slate-500">{desc}</span>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                {showGoTo && (
+                    <div className="flex shrink-0 items-center gap-2 border-b border-white/6 bg-[#0c1222] px-3 py-2">
+                        <span className="text-xs text-slate-500">Go to line:</span>
+                        <input
+                            autoFocus
+                            type="number"
+                            value={goToLine}
+                            onChange={(e) => setGoToLine(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter") jumpToLine();
+                                if (e.key === "Escape") {
+                                    setShowGoTo(false);
+                                    setGoToLine("");
+                                }
+                            }}
+                            className="w-16 rounded border border-[#1856FF]/30 bg-white/7 px-2 py-0.5 font-mono text-xs text-slate-200 outline-none"
+                            min={1}
+                            max={lines.length}
+                            placeholder={`1–${lines.length}`}
+                        />
+                        <button
+                            type="button"
+                            onClick={jumpToLine}
+                            className="rounded bg-[#1856FF]/25 px-2 py-0.5 text-xs text-[#60a5fa]"
+                        >
+                            Jump
                         </button>
-                    )}
+                    </div>
+                )}
 
-                    {/* Collapse */}
-                    <button
-                        onClick={() => onCollapsedChange?.(true)}
-                        title="Hide editor (focus mode)"
-                        className="p-1.5 rounded-lg transition-colors"
-                        style={{ color: "rgba(148,163,184,0.4)" }}
-                        onMouseEnter={(e) => (e.currentTarget as HTMLElement).style.color = "rgba(96,165,250,0.8)"}
-                        onMouseLeave={(e) => (e.currentTarget as HTMLElement).style.color = "rgba(148,163,184,0.4)"}
+                <div className="relative flex flex-1 overflow-hidden bg-[#0f172a] font-mono text-sm">
+                    <div
+                        ref={lineNumRef}
+                        className="select-none overflow-hidden shrink-0 border-r border-white/6 bg-black/20 py-4 pl-3 pr-3 text-right text-[0.7rem] leading-5 text-slate-600"
+                        style={{ minWidth: "3rem" }}
+                        aria-hidden
                     >
-                        <ChevronLeft className="size-3.5" />
-                    </button>
-                </div>
-            </div>
-
-            {/* Shortcuts panel */}
-            {showShortcuts && (
-                <div
-                    className="border-b shrink-0 p-3 grid grid-cols-2 gap-x-4 gap-y-1.5"
-                    style={{ background: "rgba(15,23,42,0.98)", borderColor: "rgba(255,255,255,0.05)" }}
-                >
-                    {EDITOR_SHORTCUTS.map(({ keys, desc }) => (
-                        <div key={keys} className="flex items-center gap-2">
-                            <kbd
-                                className="text-[9px] px-1 py-0.5 rounded font-mono shrink-0"
-                                style={{ background: "rgba(255,255,255,0.08)", color: "rgba(96,165,250,0.8)", border: "1px solid rgba(255,255,255,0.1)" }}
-                            >
-                                {keys}
-                            </kbd>
-                            <span className="text-[10px] truncate" style={{ color: "rgba(148,163,184,0.5)" }}>{desc}</span>
-                        </div>
-                    ))}
-                </div>
-            )}
-
-            {/* Go to line */}
-            {showGoTo && (
-                <div
-                    className="flex items-center gap-2 px-3 py-2 border-b shrink-0"
-                    style={{ background: "rgba(15,23,42,0.98)", borderColor: "rgba(255,255,255,0.05)" }}
-                >
-                    <span className="text-xs" style={{ color: "rgba(148,163,184,0.6)" }}>Go to line:</span>
-                    <input
-                        autoFocus
-                        type="number"
-                        value={goToLine}
-                        onChange={(e) => setGoToLine(e.target.value)}
-                        onKeyDown={(e) => {
-                            if (e.key === "Enter") jumpToLine();
-                            if (e.key === "Escape") { setShowGoTo(false); setGoToLine(""); }
-                        }}
-                        className="w-16 text-xs px-2 py-0.5 rounded outline-none font-mono"
+                        {lines.map((_, i) => (
+                            <div key={i}>{i + 1}</div>
+                        ))}
+                    </div>
+                    <textarea
+                        ref={textareaRef}
+                        value={value}
+                        onChange={(e) => onChange(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        spellCheck={false}
+                        autoCapitalize="off"
+                        autoCorrect="off"
+                        aria-label="Diagram source code"
+                        className="flex-1 resize-none bg-transparent p-4 pl-3 text-[0.7rem] leading-5 text-slate-200 outline-none caret-[#60a5fa]"
                         style={{
-                            background: "rgba(255,255,255,0.07)",
-                            color: "rgba(226,232,240,0.9)",
-                            border: "1px solid rgba(24,86,255,0.3)",
+                            fontFamily:
+                                "var(--font-jetbrains-mono), 'JetBrains Mono', 'Fira Code', monospace",
                         }}
-                        min={1}
-                        max={lines.length}
-                        placeholder={`1–${lines.length}`}
                     />
-                    <button
-                        onClick={jumpToLine}
-                        className="text-xs px-2 py-0.5 rounded"
-                        style={{ background: "rgba(24,86,255,0.2)", color: "rgba(96,165,250,0.9)" }}
-                    >
-                        Jump
-                    </button>
-                    <button
-                        onClick={() => { setShowGoTo(false); setGoToLine(""); }}
-                        className="text-xs"
-                        style={{ color: "rgba(148,163,184,0.4)" }}
-                    >
-                        ✕
-                    </button>
-                </div>
-            )}
-
-            {/* Editor body */}
-            <div className="flex flex-1 overflow-hidden font-mono text-sm relative" style={{ background: "#0F172A" }}>
-                {/* Line numbers */}
-                <div
-                    ref={lineNumRef}
-                    className="select-none overflow-hidden shrink-0 pt-4 pb-4 pr-3 pl-3"
-                    style={{
-                        color: "rgba(148,163,184,0.3)",
-                        borderRight: "1px solid rgba(255,255,255,0.05)",
-                        minWidth: "3rem",
-                        lineHeight: "1.25rem",
-                        fontSize: "0.7rem",
-                        textAlign: "right",
-                        background: "rgba(0,0,0,0.2)",
-                    }}
-                >
-                    {lines.map((_, i) => (
-                        <div key={i}>{i + 1}</div>
-                    ))}
                 </div>
 
-                {/* Textarea */}
-                <textarea
-                    ref={textareaRef}
-                    value={value}
-                    onChange={(e) => onChange(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    spellCheck={false}
-                    autoCapitalize="off"
-                    autoCorrect="off"
-                    className="flex-1 resize-none outline-none p-4 pl-4"
-                    style={{
-                        background: "transparent",
-                        color: "#E2E8F0",
-                        fontSize: "0.7rem",
-                        lineHeight: "1.25rem",
-                        caretColor: "#60A5FA",
-                        fontFamily: "var(--font-jetbrains-mono), 'JetBrains Mono', 'Fira Code', monospace",
-                    }}
-                />
+                <div className="flex shrink-0 items-center justify-between border-t border-white/6 bg-[#0f172a] px-3 py-1.5">
+                    <span className="font-mono text-[10px] text-slate-600">
+                        {lines.length} lines · {value.length} chars
+                    </span>
+                    <button
+                        type="button"
+                        onClick={() => setShowGoTo(true)}
+                        className="text-[10px] text-slate-600 transition-colors hover:text-[#60a5fa]/80"
+                    >
+                        Ctrl+G · Go to line
+                    </button>
+                </div>
             </div>
-
-            {/* Footer */}
-            <div
-                className="flex items-center justify-between px-3 py-1.5 shrink-0"
-                style={{
-                    background: "rgba(15,23,42,0.95)",
-                    borderTop: "1px solid rgba(255,255,255,0.05)",
-                }}
-            >
-                <span className="text-xs font-mono" style={{ color: "rgba(148,163,184,0.4)" }}>
-                    {lines.length} lines · {value.length} chars
-                </span>
-                <button
-                    onClick={() => setShowGoTo(true)}
-                    className="text-xs transition-colors"
-                    style={{ color: "rgba(148,163,184,0.35)" }}
-                    onMouseEnter={(e) => (e.currentTarget as HTMLElement).style.color = "rgba(96,165,250,0.7)"}
-                    onMouseLeave={(e) => (e.currentTarget as HTMLElement).style.color = "rgba(148,163,184,0.35)"}
-                >
-                    Ctrl+G · Go to line
-                </button>
-            </div>
-        </div>
+        </TooltipProvider>
     );
 }
